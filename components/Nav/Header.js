@@ -7,7 +7,6 @@ import HeaderNavLarge from './HeaderNavLarge';
 import HeaderNavSmall from './HeaderNavSmall';
 import Home from './Home';
 
-import 'react-toastify/dist/ReactToastify.css';
 import useTranslation from 'next-translate/useTranslation';
 
 export default function Header() {
@@ -21,6 +20,7 @@ export default function Header() {
     router.push('/home');
     toast.success(t('header:logged_out'), {
       position: toast.POSITION.BOTTOM_RIGHT,
+      delay: 500, // Without timeout, emailpassword login somehow dismisses the toast upon redirect
     });
   };
   return (

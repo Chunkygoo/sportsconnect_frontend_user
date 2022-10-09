@@ -17,7 +17,6 @@ export const frontendConfig = () => {
       SessionReact.init({
         cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
       }),
-      // SessionReact.init(),
       ThirdPartyEmailPassword.init({
         signInAndUpFeature: {
           disableDefaultUI: true,
@@ -48,11 +47,13 @@ export const frontendConfig = () => {
             if (localStorage.getItem('lang') === 'en-US') {
               toast.success('Welcome back!', {
                 position: toast.POSITION.BOTTOM_RIGHT,
-              });
+                delay: 500,
+              }); // Without timeout, emailpassword login somehow dismisses the toast upon redirect
               return '/home'; // must redirect to home.js because that is where router.locale gets updated
             } else if (localStorage.getItem('lang') === 'zh') {
               toast.success('欢迎！', {
                 position: toast.POSITION.BOTTOM_RIGHT,
+                delay: 500,
               });
               return '/zh/home'; // must redirect to home.js because that is where router.locale gets updated
             }

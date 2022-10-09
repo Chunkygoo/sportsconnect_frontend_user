@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Input from './Input';
 import Textarea from './Textarea';
 import Experiences from './Experiences';
@@ -10,9 +10,7 @@ import { updateUser, uploadProfilePhoto } from '../../network/lib/users';
 import YearMonthDayPicker from '../DatePicker/YearMonthDayPicker';
 import CropImage from '../CropImage/CropImage';
 import Tooltip from './Tooltip';
-import { ToastContainer, toast } from 'react-toastify';
-
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 Date.prototype.yyyymmdd = yyyymmdd;
 
@@ -42,9 +40,14 @@ export default function Portfolio({ _res, currentUser }) {
     _res.data.profile_photo[0] ? _res.data.profile_photo[0].photo_url : 'None'
   );
   const [uploading, setUploading] = useState(false);
+  const firstMount = useRef(true);
   let isDisabled = !currentUser;
 
   useEffect(() => {
+    if (firstMount.current) {
+      firstMount.current = false;
+      return;
+    }
     let handleUpdate = async () => {
       await updateUser({
         name: name,
@@ -397,7 +400,6 @@ export default function Portfolio({ _res, currentUser }) {
           </div>
         </div>
       </div>
-      <ToastContainer />
     </Fragment>
   );
 }

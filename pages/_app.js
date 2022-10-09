@@ -1,7 +1,7 @@
 import '../styles/globals.css';
 import Layout from '../components/Layout';
 import { Offline } from 'react-detect-offline';
-import { Fragment, useEffect, useRef } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Modal from '../components/Modal/Modal';
 import useTranslation from 'next-translate/useTranslation';
 import SuperTokensReact, { SuperTokensWrapper } from 'supertokens-auth-react';
@@ -12,9 +12,12 @@ import Session from 'supertokens-auth-react/recipe/session';
 import Spinner from '../components/Spinner';
 import { ToastContainer } from 'react-toastify';
 import { useIdleTimer } from 'react-idle-timer';
+import { keepLambdaWarm } from '../network/lib/lambda';
+import { signOut } from 'supertokens-auth-react/recipe/thirdpartyemailpassword';
+import { getCurrentUser } from '../network/lib/users';
 
 import 'react-toastify/dist/ReactToastify.css';
-import { keepLambdaWarm } from '../network/lib/lambda';
+import swal from 'sweetalert';
 
 if (typeof window !== 'undefined') {
   // we only want to call this init function on the frontend, so we check typeof window !== 'undefined'
@@ -24,16 +27,20 @@ if (typeof window !== 'undefined') {
 function MyApp({ Component, pageProps }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [resDataId, setResDataId] = useState(null);
+  const abortControllerRef = useRef(new AbortController());
+  const intervalDoubleDomainRef = useRef(null);
 
-  // Workaround for Lambda warm start
-  const intervalIdRef = useRef(null); // we use a ref and not a variable because variables get reassigned (therefore creating another timer) upon rerender
+  // Workaround for Lambda warm start (probably dont need this since we are executing getCurrentUser every 3 seconds)
+  const intervalRef = useRef(null); // we use a ref and not a variable because variables get reassigned (therefore creating another timer) upon rerender
   const startLambdaAndKeepWarm = () => {
     keepLambdaWarm(); // initial warm up
-    intervalIdRef.current = setInterval(keepLambdaWarm, 1000 * 60 * 5); // warm up every 5 mins
+    intervalRef.current = setInterval(keepLambdaWarm, 1000 * 60 * 5); // warm up every 5 mins
   };
 
   const handleOnIdle = () => {
-    clearInterval(intervalIdRef.current);
+    clearInterval(intervalRef.current);
   };
 
   useIdleTimer({
@@ -47,12 +54,48 @@ function MyApp({ Component, pageProps }) {
   }, []);
   // End workaround for Lambda warm start
 
+  // workaround for Google login issues
   useEffect(() => {
     if (!localStorage.getItem('lang')) {
       localStorage.setItem('lang', 'en-US');
       return;
     }
   }); // run this every time the component rerenders (in case the user clears the localStorage manually, we will not run into an infinite loop)
+  // End workaround for Google login issues
+
+  // Workaround for two sites sharing cookie
+  useEffect(() => {
+    const abortControllerRefCurrent = abortControllerRef.current;
+    const helper = async () => {
+      if (!intervalDoubleDomainRef.current) {
+        intervalDoubleDomainRef.current = setInterval(async () => {
+          let res = await getCurrentUser(abortControllerRefCurrent);
+          if (res?.status === 200) {
+            setResDataId(res?.data.id);
+          }
+        }, 3000);
+      }
+    };
+    helper();
+    return () => {
+      abortControllerRefCurrent.abort();
+      clearInterval(intervalDoubleDomainRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const helper = async () => {
+      if (!currentUserId) {
+        setCurrentUserId(resDataId);
+      } else if (currentUserId !== resDataId) {
+        await signOut();
+        setCurrentUserId(null); // after signing out, we need to reset the currentUserId to null
+        setResDataId(null); // after signing out, we need to reset the resDataId to null
+      }
+    };
+    helper();
+  }, [currentUserId, resDataId]);
+  // End workaround for two sites sharing cookie
 
   useEffect(() => {
     switch (router.locale) {
