@@ -63,7 +63,7 @@ function MyApp({ Component, pageProps }) {
   }); // run this every time the component rerenders (in case the user clears the localStorage manually, we will not run into an infinite loop)
   // End workaround for Google login issues
 
-  // Workaround for two sites sharing cookie /
+  // Workaround for two sites sharing cookie
   useEffect(() => {
     const abortControllerRefCurrent = abortControllerRef.current;
     const helper = async () => {
