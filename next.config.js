@@ -11,11 +11,6 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
-  // experimental: {
-  //   images: {
-  //     unoptimized: true,
-  //   },
-  // },
   async rewrites() {
     return [
       {
