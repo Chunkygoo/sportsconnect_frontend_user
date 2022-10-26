@@ -22,16 +22,17 @@ export default function Template({ endpoint, title, isDisabled }) {
   const router = useRouter();
   const userId = router.query.id;
   useEffect(() => {
+    const abortControllerRefCurrent = abortControllerRef.current;
     let fetchData = async () => {
       let res;
       if (endpoint === '/educations') {
-        if (!userId) res = await getEducations(abortControllerRef.current);
+        if (!userId) res = await getEducations(abortControllerRefCurrent);
         else
-          res = await getEducationsForUser(abortControllerRef.current, userId);
+          res = await getEducationsForUser(abortControllerRefCurrent, userId);
       } else {
-        if (!userId) res = await getExperiences(abortControllerRef.current);
+        if (!userId) res = await getExperiences(abortControllerRefCurrent);
         else
-          res = await getExperiencesForUser(abortControllerRef.current, userId);
+          res = await getExperiencesForUser(abortControllerRefCurrent, userId);
       }
       if (res?.status == 200) {
         setData(res?.data);
@@ -40,7 +41,6 @@ export default function Template({ endpoint, title, isDisabled }) {
       }
     };
     fetchData();
-    const abortControllerRefCurrent = abortControllerRef.current;
     return () => {
       abortControllerRefCurrent.abort();
     };

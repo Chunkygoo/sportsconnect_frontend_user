@@ -6,48 +6,89 @@ import Experiences from './Experiences';
 import Educations from './Educations';
 import yyyymmdd from '../../utilities/yyyymmdd';
 import useTranslation from 'next-translate/useTranslation';
-import { updateUser, uploadProfilePhoto } from '../../network/lib/users';
+import {
+  getCurrentUser,
+  updateUser,
+  uploadProfilePhoto,
+} from '../../network/lib/users';
 import YearMonthDayPicker from '../DatePicker/YearMonthDayPicker';
 import CropImage from '../CropImage/CropImage';
 import Tooltip from './Tooltip';
 import { toast } from 'react-toastify';
+import Spinner from '../Spinner';
 
 Date.prototype.yyyymmdd = yyyymmdd;
 
-export default function Portfolio({ _res, currentUser }) {
+export default function Portfolio({ _res = null, currentUser }) {
   const { t } = useTranslation();
-  const [id, _] = useState(_res.data.id);
-  const [name, setName] = useState(_res.data.name);
-  const [wechatId, setWechatId] = useState(_res.data.wechatId);
-  const [publicProfile, setPublicProfile] = useState(_res.data.public);
-  const [preferredName, setPreferredName] = useState(_res.data.preferred_name);
-  const [bio, setBio] = useState(_res.data.bio);
-  const [gender, setGender] = useState(_res.data.gender);
-  const [contact, setContact] = useState(_res.data.contact_number);
+  const [id, setId] = useState(_res?.data.id);
+  const [name, setName] = useState(_res?.data.name);
+  const [wechatId, setWechatId] = useState(_res?.data.wechatId);
+  const [publicProfile, setPublicProfile] = useState(_res?.data.public);
+  const [preferredName, setPreferredName] = useState(_res?.data.preferred_name);
+  const [bio, setBio] = useState(_res?.data.bio);
+  const [gender, setGender] = useState(_res?.data.gender);
+  const [contact, setContact] = useState(_res?.data.contact_number);
   const [currentAddress, setCurrentAddress] = useState(
-    _res.data.current_address
+    _res?.data.current_address
   );
   const [permanentAddress, setPermanentAddress] = useState(
-    _res.data.permanent_address
+    _res?.data.permanent_address
   );
-  const [email, setEmail] = useState(_res.data.email);
+  const [email, setEmail] = useState(_res?.data.email);
   const [birthday, setBirthday] = useState(
-    _res.data.birthday
-      ? new Date(_res.data.birthday + 'T15:00:00Z')
+    _res?.data.birthday
+      ? new Date(_res?.data.birthday + 'T15:00:00Z')
       : new Date('2022-07-02T15:00:00Z')
   );
   const [photoUrl, setPhotoUrl] = useState(
-    _res.data.profile_photo[0] ? _res.data.profile_photo[0].photo_url : 'None'
+    _res?.data.profile_photo[0] ? _res?.data.profile_photo[0].photo_url : 'None'
   );
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const abortControllerRef = useRef(new AbortController());
   const firstMount = useRef(true);
   let isDisabled = !currentUser;
 
   useEffect(() => {
-    if (firstMount.current) {
-      firstMount.current = false;
-      return;
+    const abortControllerRefCurrent = abortControllerRef.current;
+    let fetchCurrentUser = async () => {
+      let res = await getCurrentUser(abortControllerRefCurrent);
+      if (res?.status === 200) {
+        let currentUser = res.data;
+        if (currentUser.birthday) {
+          setBirthday(new Date(currentUser.birthday + 'T15:00:00Z'));
+        } else {
+          setBirthday(new Date('2022-07-02T15:00:00Z'));
+        }
+        if (res.data.profile_photo?.length > 0) {
+          setPhotoUrl(res.data.profile_photo[0].photo_url);
+        }
+        setId(currentUser.id);
+        setName(currentUser.name);
+        setWechatId(currentUser.wechatId);
+        setPublicProfile(currentUser.public);
+        setPreferredName(currentUser.preferred_name);
+        setBio(currentUser.bio);
+        setGender(currentUser.gender);
+        setContact(currentUser.contact_number);
+        setCurrentAddress(currentUser.current_address);
+        setPermanentAddress(currentUser.permanent_address);
+        setEmail(currentUser.email);
+        setLoading(false);
+      } else if (res?.status == 404 || res?.status == 422) {
+        router.push('/usernotfound');
+      }
+    };
+    if (!_res) {
+      fetchCurrentUser();
     }
+    return () => {
+      abortControllerRefCurrent.abort();
+    };
+  }, [_res]);
+
+  useEffect(() => {
     let handleUpdate = async () => {
       await updateUser({
         name: name,
@@ -62,7 +103,12 @@ export default function Portfolio({ _res, currentUser }) {
         birthday: birthday?.yyyymmdd(),
       });
     };
-    if (!isDisabled) {
+    if (!isDisabled && !loading) {
+      // we check for firstMount only after loading is completed. This ensure handleUpdate is not called after fetchCurrentUser() is completed
+      if (firstMount.current) {
+        firstMount.current = false;
+        return;
+      }
       handleUpdate();
     }
   }, [
@@ -77,8 +123,17 @@ export default function Portfolio({ _res, currentUser }) {
     permanentAddress,
     email,
     birthday,
+    loading,
     isDisabled,
   ]);
+
+  if (!_res && loading) {
+    return (
+      <div className="m-auto">
+        <Spinner size={12} />
+      </div>
+    );
+  }
 
   return (
     <Fragment>

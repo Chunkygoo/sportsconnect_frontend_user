@@ -9,19 +9,12 @@ import Home from './Home';
 
 import useTranslation from 'next-translate/useTranslation';
 
-export default function Header() {
+export default function Header({ logOutHelper }) {
   const [loggingOut, setLoggingOut] = useState(false);
-  const router = useRouter();
-  const { t } = useTranslation();
   let handleLogout = async () => {
     setLoggingOut(true);
-    await signOut();
+    await logOutHelper();
     setLoggingOut(false);
-    router.push('/home');
-    toast.success(t('header:logged_out'), {
-      position: toast.POSITION.BOTTOM_RIGHT,
-      delay: 500, // Without timeout, emailpassword login somehow dismisses the toast upon redirect
-    });
   };
   return (
     <Fragment>

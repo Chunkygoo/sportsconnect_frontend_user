@@ -16,6 +16,14 @@ const getCsrfToken = async () => {
   }
 };
 
+export const myAxiosPrivateServerSide = () => {
+  const myAxios = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_RAW_URL,
+  });
+  Session.addAxiosInterceptors(myAxios);
+  return myAxios;
+};
+
 export default async function myAxiosPrivate() {
   const csrfToken = await getCsrfToken();
   const myAxios = axios.create({

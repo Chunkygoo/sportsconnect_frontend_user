@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Spinner from '../Spinner';
@@ -13,12 +13,18 @@ import {
   divisionOptions,
 } from './data';
 import SelectDropdown from './SelectDropdown';
+import {
+  getInterestedUniversities,
+  getUniversities,
+} from '../../network/lib/universities';
+import Session from 'supertokens-auth-react/recipe/session';
 
 export default function UniversitiesGallery({ mine, _res }) {
-  const [allUnis, setAllUnis] = useState(_res.data);
+  const [allUnis, setAllUnis] = useState(_res?.data || []);
   const [searchIndex, setSearchIndex] = useState(24);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, _] = useState(false);
+  const [loadingUnis, _] = useState(false);
+  const [loading, setLoading] = useState(!_res);
   const [selectedCategory, setSelectedCategory] = useState(cateGoryOptions[0]);
   const [selectedConference, setSelectedConference] = useState(
     conferenceOptions[0]
@@ -27,8 +33,8 @@ export default function UniversitiesGallery({ mine, _res }) {
   const [selectedRegion, setSelectedRegion] = useState(regionOptions[0]);
   const [selectedDivision, setSelectedDivision] = useState(divisionOptions[0]);
   const [search, setSearch] = useState('');
+  const abortControllerRef = useRef(new AbortController());
   const { t } = useTranslation();
-
   const searchedUnis = filterUni(transformUnis(allUnis), search);
 
   useEffect(() => {
@@ -50,6 +56,27 @@ export default function UniversitiesGallery({ mine, _res }) {
       setHasMore(true);
     }
   }, [searchIndex, searchedUnis]);
+
+  useEffect(() => {
+    const abortControllerRefCurrent = abortControllerRef.current;
+    let fetchAllUnis = async (limit) => {
+      if (!(await Session.doesSessionExist())) return; // /myuniversities would always execute the below code. /universities would run it only if the user is logged in
+      let res;
+      if (mine) {
+        res = await getInterestedUniversities(limit, abortControllerRefCurrent);
+        setLoading(false); // /myuniversities does not have getStaticProps so loading state was initialized to true
+      } else {
+        res = await getUniversities(limit, abortControllerRefCurrent);
+      }
+      if (res?.status === 200) {
+        setAllUnis(res.data);
+      }
+    };
+    fetchAllUnis(-1);
+    return () => {
+      abortControllerRefCurrent.abort();
+    };
+  }, [mine]);
 
   function transformUnis(unis) {
     let transformedUnis = {};
@@ -131,6 +158,7 @@ export default function UniversitiesGallery({ mine, _res }) {
           uni.city.toLowerCase().includes(search)
       );
     }
+    // below code is used to optimistically remove unis from /myuniversities
     if (mine) {
       let i = 0;
       while (i < filteredUnis.length) {
@@ -148,6 +176,16 @@ export default function UniversitiesGallery({ mine, _res }) {
       if (filteredUnis.length === 0) document.body.style.overflow = 'unset';
     }
     return filteredUnis;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen">
+        <div className="m-auto">
+          <Spinner size={12} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -241,7 +279,7 @@ export default function UniversitiesGallery({ mine, _res }) {
           />
         </span>
       </div>
-      {loading ? (
+      {loadingUnis ? (
         <Spinner />
       ) : (
         <InfiniteScroll

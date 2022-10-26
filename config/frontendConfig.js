@@ -14,10 +14,37 @@ export const frontendConfig = () => {
       EmailVerification.init({
         mode: process.env.NEXT_PUBLIC_EMAIL_VERIFICATION,
       }),
-      SessionReact.init({
-        cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
-      }),
+      // SessionReact.init({
+      // cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+      // }),
+      process.env.NEXT_PUBLIC_ENV === 'DEV'
+        ? SessionReact.init({
+            cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+          })
+        : SessionReact.init(),
+
       ThirdPartyEmailPassword.init({
+        override: {
+          components: {
+            ThirdPartySignInAndUpCallbackTheme_Override: () => {
+              return (
+                <div className="flex h-screen">
+                  <div className="m-auto">
+                    <h1 className="mb-2 text-2xl">
+                      You are getting redirected...
+                    </h1>
+                    <div>
+                      <p className="mt-4">
+                        Here is a cookie while you are waiting 🍪
+                      </p>
+                      <p>Team SportsConnect</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            },
+          },
+        },
         signInAndUpFeature: {
           disableDefaultUI: true,
           providers: [Google.init()],

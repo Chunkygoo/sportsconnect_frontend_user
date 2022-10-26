@@ -1,8 +1,8 @@
-import myAxiosPrivate from '../myAxiosPrivate';
+import myAxiosPrivate, { myAxiosPrivateServerSide } from '../myAxiosPrivate';
 
 export async function getPublicUniversities(limit) {
   try {
-    let myAxios = await myAxiosPrivate();
+    let myAxios = await myAxiosPrivateServerSide();
     let res = await myAxios
       .get(`/universities/public?limit=${limit}`)
       .catch((e) => {
