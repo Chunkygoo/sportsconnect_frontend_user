@@ -51,7 +51,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
         <ul className="flex flex-col items-center justify-between min-h-[250px]">
           <li>
             <Link href="/home">
-              <a
+              <span
                 onClick={() => {
                   setIsNavOpen(false);
                 }}
@@ -64,7 +64,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
                 aria-current="page"
               >
                 {t('header:home')}
-              </a>
+              </span>
             </Link>
           </li>
           <li>
@@ -72,7 +72,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
           </li>
           <li>
             <Link href="/steps">
-              <a
+              <span
                 onClick={() => {
                   setIsNavOpen(false);
                 }}
@@ -85,12 +85,12 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
                 aria-current="page"
               >
                 {t('header:steps')}
-              </a>
+              </span>
             </Link>
           </li>
           <li>
             <Link href="/portfolio">
-              <a
+              <span
                 onClick={() => {
                   setIsNavOpen(false);
                 }}
@@ -102,14 +102,14 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
                 }
               >
                 {t('header:portfolio')}
-              </a>
+              </span>
             </Link>
           </li>
           {!doesSessionExist ? (
             <Fragment>
               <li>
                 <Link href="/auth/loginsignup">
-                  <a
+                  <span
                     onClick={() => {
                       setIsNavOpen(false);
                     }}
@@ -121,7 +121,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
                     }
                   >
                     {t('header:login_signup')}
-                  </a>
+                  </span>
                 </Link>
               </li>
             </Fragment>

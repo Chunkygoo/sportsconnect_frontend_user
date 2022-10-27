@@ -18,12 +18,12 @@ export default function _404({ description }) {
             {desc}
           </p>
           <Link href="/home">
-            <a
+            <span
               href="#"
               className="px-5 inline py-3 text-sm font-medium leading-5 shadow-2xl text-black transition-all duration-400 border border-transparent rounded-lg focus:outline-none bg-white text-xl"
             >
               {t('_404:back')}
-            </a>
+            </span>
           </Link>
         </div>
         <div className="w-full lg:flex lg:justify-end lg:w-1/2 mx-5 my-12">

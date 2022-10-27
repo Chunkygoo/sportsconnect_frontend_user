@@ -13,17 +13,17 @@ export default function Index() {
             src="/computer.jpg"
             className="object-center object-cover pointer-events-none"
             alt="Computer image"
-            layout="fill"
+            fill={true}
             priority={true}
           /> */}
           <Image
             src={'/computer.jpg'}
             className="object-center object-cover pointer-events-none"
             alt="Computer image"
-            layout="fill"
             priority={true}
             blurDataURL={'/computer_blurred.png'}
             placeholder="blur"
+            fill={true}
           />
           <div className="flex items-center h-full px-20 bg-gray-900 bg-opacity-40 relative z-1">
             <div>

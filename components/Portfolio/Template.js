@@ -14,10 +14,12 @@ import {
 } from '../../network/lib/experience';
 import Spinner from '../Spinner';
 import { useRouter } from 'next/router';
+import ContentLoader from 'react-content-loader';
 
 export default function Template({ endpoint, title, isDisabled }) {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [createLoading, setCreateLoading] = useState(false);
   const abortControllerRef = useRef(new AbortController());
   const router = useRouter();
   const userId = router.query.id;
@@ -36,6 +38,7 @@ export default function Template({ endpoint, title, isDisabled }) {
       }
       if (res?.status == 200) {
         setData(res?.data);
+        setLoading(false);
       } else if (res?.status == 404 || res?.status == 422) {
         router.push('/usernotfound');
       }
@@ -61,7 +64,7 @@ export default function Template({ endpoint, title, isDisabled }) {
       );
       return;
     }
-    setLoading(true);
+    setCreateLoading(true);
     let dummyCreateObject = {
       description: '',
       active: false,
@@ -75,7 +78,7 @@ export default function Template({ endpoint, title, isDisabled }) {
       res = await createExperience(dummyCreateObject);
     }
     if (res.status) {
-      setLoading(false);
+      setCreateLoading(false);
       setData((data) => [...data, res.data]);
     }
   };
@@ -109,7 +112,7 @@ export default function Template({ endpoint, title, isDisabled }) {
             </div>
           </div>
           <span className="float-right pt-1">
-            {loading ? (
+            {createLoading ? (
               <Spinner />
             ) : (
               !isDisabled && (
@@ -122,27 +125,47 @@ export default function Template({ endpoint, title, isDisabled }) {
           </span>
         </div>
         <ul className="list-inside space-y-2">
-          {data.map((datum, index) => {
-            let startDate = new Date(datum.start_date + 'T15:00:00Z');
-            let endDate = new Date(datum.start_date + 'T15:00:00Z');
-            if (!datum.active) {
-              endDate = new Date(datum.end_date + 'T15:00:00Z');
-            }
-            return (
-              <ItemRow
-                key={datum.id}
-                index={index}
-                removeItem={removeDatum}
-                id={datum.id}
-                description={datum.description}
-                startDate={startDate}
-                endDate={endDate}
-                active={datum.active}
-                endpoint={endpoint}
-                isDisabled={isDisabled}
-              />
-            );
-          })}
+          {loading ? (
+            <div
+              role="status"
+              className="text-blue-600 max-w-[100%] animate-pulse"
+            >
+              <div className="mb-4">
+                <div className="pt-2 h-2.5 mb-1 bg-gray-200 rounded-full dark:bg-gray-700 w-[95%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+                <div className="pt-2 h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-[90%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+              </div>
+              <div className="mb-4">
+                <div className="pt-2 h-2.5 mb-1 bg-gray-200 rounded-full dark:bg-gray-700 w-[97%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+                <div className="pt-2 h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-[80%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+              </div>
+              <div className="mb-4">
+                <div className="pt-2 h-2.5 mb-1 bg-gray-200 rounded-full dark:bg-gray-700 w-[80%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+                <div className="pt-2 h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-[85%] px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"></div>
+              </div>
+            </div>
+          ) : (
+            data.map((datum, index) => {
+              let startDate = new Date(datum.start_date + 'T15:00:00Z');
+              let endDate = new Date(datum.start_date + 'T15:00:00Z');
+              if (!datum.active) {
+                endDate = new Date(datum.end_date + 'T15:00:00Z');
+              }
+              return (
+                <ItemRow
+                  key={datum.id}
+                  index={index}
+                  removeItem={removeDatum}
+                  id={datum.id}
+                  description={datum.description}
+                  startDate={startDate}
+                  endDate={endDate}
+                  active={datum.active}
+                  endpoint={endpoint}
+                  isDisabled={isDisabled}
+                />
+              );
+            })
+          )}
         </ul>
       </div>
     </Fragment>

@@ -46,7 +46,7 @@ const Content = ({ uni, onClose, updateTickedUni }) => {
             src={uni.backgroundImage}
             className="bg-repeat-round rounded-r-xl"
             alt="University image"
-            layout="fill"
+            fill={true}
             blurDataURL={uni.blurredBackgroundImage}
             placeholder="blur"
           />
@@ -62,7 +62,7 @@ const Content = ({ uni, onClose, updateTickedUni }) => {
           <Image
             src={uni.logo}
             alt="University logo"
-            layout="fill"
+            fill={true}
             blurDataURL={uni.blurredLogo}
             placeholder="blur"
           />

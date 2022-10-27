@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import React, { Fragment, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 import { sendEmail } from '../network/lib/emails';
+import { toast } from 'react-toastify';
 
 export default function ContactUs() {
   const { t } = useTranslation();
@@ -11,12 +12,22 @@ export default function ContactUs() {
   let router = useRouter();
   let sendEmailAndRedirect = async (e) => {
     e.preventDefault();
-    await sendEmail({
+    let res = await sendEmail({
       name: name,
       email: email,
       message: message,
     });
-    router.push('/home');
+    if (res.status === 401) {
+      router.push('/auth/loginsignup');
+      toast.error(t('contactus:login_to_send_email'), {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    } else {
+      router.push('/home');
+      toast.success(t('contactus:email_sent'), {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    }
   };
   return (
     <Fragment>

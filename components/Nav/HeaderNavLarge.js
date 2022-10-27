@@ -16,7 +16,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
     <ul className="DESKTOP-MENU space-x-8 hidden lg:flex">
       <li>
         <Link href="/home">
-          <a
+          <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
               (urlPath.includes('/home')
@@ -26,7 +26,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
             aria-current="page"
           >
             {t('header:home')}
-          </a>
+          </span>
         </Link>
       </li>
       <li>
@@ -34,7 +34,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
       </li>
       <li>
         <Link href="/steps">
-          <a
+          <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
               (urlPath.includes('/steps')
@@ -44,12 +44,12 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
             aria-current="page"
           >
             {t('header:steps')}
-          </a>
+          </span>
         </Link>
       </li>
       <li>
         <Link href="/portfolio">
-          <a
+          <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
               (urlPath.includes('/portfolio')
@@ -60,14 +60,14 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
           >
             {' '}
             {t('header:portfolio')}
-          </a>
+          </span>
         </Link>
       </li>
       {!doesSessionExist ? (
         <Fragment>
           <li>
             <Link href="/auth/loginsignup">
-              <a
+              <span
                 className={
                   'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
                   (urlPath.includes('/auth/loginsignup')
@@ -78,7 +78,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
               >
                 {' '}
                 {t('header:login_signup')}
-              </a>
+              </span>
             </Link>
           </li>
         </Fragment>

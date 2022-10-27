@@ -89,7 +89,7 @@ export default function ItemRow({
             inputRef={textareaRef}
             element="textarea"
             rows="1"
-            placeholder="Add a description"
+            placeholder={t('portfolio:add_a_description')}
             value={currentDescription}
             onChange={(e) => setCurrentDescription(e.target.value)}
             className="pt-3 pb-2  w-full px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"

@@ -38,12 +38,14 @@ export default function Footer() {
               <ul className="text-gray-600">
                 <li className="mb-4">
                   <Link href="/contactus">
-                    <a className="hover:underline">{t('footer:contact_us')}</a>
+                    <span className="hover:underline">
+                      {t('footer:contact_us')}
+                    </span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/team">
-                    <a className="hover:underline">{t('footer:team')}</a>
+                    <span className="hover:underline">{t('footer:team')}</span>
                   </Link>
                 </li>
               </ul>
@@ -54,24 +56,24 @@ export default function Footer() {
               </h2>
               <ul className="text-gray-600">
                 <li className="mb-4">
-                  <a
+                  <span
                     href="https://www.instagram.com/sportsconnect_official/"
                     target="_blank"
                     rel="noreferrer"
                     className="hover:underline "
                   >
                     {t('footer:instagram')}
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a
+                  <span
                     href="https://www.linkedin.com/company/sportsconnecthq/"
                     target="_blank"
                     rel="noreferrer"
                     className="hover:underline"
                   >
                     {t('footer:linkedin')}
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>

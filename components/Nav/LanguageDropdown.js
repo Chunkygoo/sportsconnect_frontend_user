@@ -41,7 +41,7 @@ export default function LanguageDropdown({ setIsNavOpen }) {
         <div className="py-1" role="none">
           {router.locales.map((locale) => (
             <Link href={router.asPath} locale={locale} key={locale}>
-              <a
+              <span
                 className="text-gray-700 block px-4 py-2 text-sm"
                 onClick={() => {
                   setShowLang(!showLang);
@@ -50,7 +50,7 @@ export default function LanguageDropdown({ setIsNavOpen }) {
                 }}
               >
                 {locale === 'en-US' ? 'English' : '中文'}
-              </a>
+              </span>
             </Link>
           ))}
         </div>

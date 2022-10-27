@@ -1,6 +1,6 @@
-import useTranslation from "next-translate/useTranslation";
-import Link from "next/link";
-import React from "react";
+import useTranslation from 'next-translate/useTranslation';
+import Link from 'next/link';
+import React from 'react';
 
 export default function Features() {
   const { t } = useTranslation();
@@ -9,9 +9,9 @@ export default function Features() {
       <div className="py-8 px-4 mx-auto max-w-screen-2xl sm:py-16 lg:px-6">
         <div className="max-w-screen-md mb-8 lg:mb-16">
           <h2 className="mb-4 text-4xl font-bold md:font-extrabold text-gray-900">
-            {t("home:card_1_text_0")}
+            {t('home:card_1_text_0')}
           </h2>
-          <p className="text-gray-500 sm:text-xl">{t("home:card_1_text_1")}</p>
+          <p className="text-gray-500 sm:text-xl">{t('home:card_1_text_1')}</p>
         </div>
         <div className="space-y-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-12 md:space-y-0">
           <div>
@@ -30,15 +30,15 @@ export default function Features() {
               </svg>
             </div>
             <h3 className="mb-2 text-xl font-bold">
-              {t("home:card_1_text_2")}
+              {t('home:card_1_text_2')}
             </h3>
             <p className="text-gray-500">
               <Link href="/universities">
-                <a>
-                  <u>{t("home:card_1_text_3")}</u>
-                </a>
-              </Link>{" "}
-              {t("home:card_1_text_4")}
+                <span>
+                  <u>{t('home:card_1_text_3')}</u>
+                </span>
+              </Link>{' '}
+              {t('home:card_1_text_4')}
             </p>
           </div>
           <div>
@@ -53,15 +53,15 @@ export default function Features() {
               </svg>
             </div>
             <h3 className="mb-2 text-xl font-bold">
-              {t("home:card_1_text_5")}
+              {t('home:card_1_text_5')}
             </h3>
             <p className="text-gray-500">
               <Link href="/portfolio">
-                <a>
-                  <u>{t("home:card_1_text_6")}</u>
-                </a>
-              </Link>{" "}
-              {t("home:card_1_text_7")}
+                <span>
+                  <u>{t('home:card_1_text_6')}</u>
+                </span>
+              </Link>{' '}
+              {t('home:card_1_text_7')}
             </p>
           </div>
           <div>
@@ -81,15 +81,15 @@ export default function Features() {
               </svg>
             </div>
             <h3 className="mb-2 text-xl font-bold">
-              {t("home:card_1_text_8")}
+              {t('home:card_1_text_8')}
             </h3>
             <p className="text-gray-500">
               <Link href="/contactus">
-                <a>
-                  <u>{t("home:card_1_text_9")}</u>
-                </a>
-              </Link>{" "}
-              {t("home:card_1_text_10")}
+                <span>
+                  <u>{t('home:card_1_text_9')}</u>
+                </span>
+              </Link>{' '}
+              {t('home:card_1_text_10')}
             </p>
           </div>
         </div>

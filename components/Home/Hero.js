@@ -16,14 +16,14 @@ export default function Hero() {
             {t('home:card_0_text_1')}
           </p>
           <Link href="/universities">
-            <a className="inline-flex items-center justify-center px-2 sm:px-5 py-3 mr-3 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
+            <span className="inline-flex items-center justify-center px-2 sm:px-5 py-3 mr-3 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
               {t('home:card_0_text_2')}
-            </a>
+            </span>
           </Link>
           <Link href="/steps">
-            <a className="mt-4 inline-flex items-center justify-center px-2 sm:px-4 py-3 text-base font-medium text-center text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100">
+            <span className="mt-4 inline-flex items-center justify-center px-2 sm:px-4 py-3 text-base font-medium text-center text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100">
               {t('home:card_0_text_3')}
-            </a>
+            </span>
           </Link>
         </div>
         <div className="mt-10 lg:mt-0 lg:col-span-5 lg:flex">

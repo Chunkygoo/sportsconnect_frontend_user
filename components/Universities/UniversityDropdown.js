@@ -54,7 +54,7 @@ export default function UniversityDropdown({ navSmall, setIsNavOpen }) {
           <div className="py-1" role="none">
             {uniRoutes.map((uniRoute, index) => (
               <Link href={uniRoute} key={index}>
-                <a
+                <span
                   className="text-gray-700 block px-4 py-2 text-sm"
                   onClick={() => {
                     setShowUni(!showUni);
@@ -64,7 +64,7 @@ export default function UniversityDropdown({ navSmall, setIsNavOpen }) {
                   {uniRoute === '/universities'
                     ? t('header:all_universities')
                     : t('header:my_universities')}
-                </a>
+                </span>
               </Link>
             ))}
           </div>
