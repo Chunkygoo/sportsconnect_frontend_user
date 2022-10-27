@@ -14,7 +14,6 @@ import {
 } from '../../network/lib/experience';
 import Spinner from '../Spinner';
 import { useRouter } from 'next/router';
-import ContentLoader from 'react-content-loader';
 
 export default function Template({ endpoint, title, isDisabled }) {
   const [data, setData] = useState([]);
@@ -105,10 +104,7 @@ export default function Template({ endpoint, title, isDisabled }) {
               </svg>
             </span>
             <div>
-              <span className="tracking-wide">
-                {/* {capitalizeEndpoint(endpoint)} */}
-                {title}
-              </span>
+              <span className="tracking-wide">{title}</span>
             </div>
           </div>
           <span className="float-right pt-1">
