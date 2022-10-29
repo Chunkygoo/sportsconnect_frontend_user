@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useRef } from 'react';
 import Input from './Input';
 import Textarea from './Textarea';
 import Experiences from './Experiences';
@@ -16,118 +16,72 @@ import CropImage from '../CropImage/CropImage';
 import Tooltip from './Tooltip';
 import { toast } from 'react-toastify';
 import Spinner from '../Spinner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { reactQueryKeys } from '../../config/reactQueryKeys';
+import swal from 'sweetalert';
 
 Date.prototype.yyyymmdd = yyyymmdd;
 
 export default function Portfolio({ _res = null, currentUser }) {
   const { t } = useTranslation();
-  const [id, setId] = useState(_res?.data.id);
-  const [name, setName] = useState(_res?.data.name);
-  const [wechatId, setWechatId] = useState(_res?.data.wechatId);
-  const [publicProfile, setPublicProfile] = useState(_res?.data.public);
-  const [preferredName, setPreferredName] = useState(_res?.data.preferred_name);
-  const [bio, setBio] = useState(_res?.data.bio);
-  const [gender, setGender] = useState(_res?.data.gender);
-  const [contact, setContact] = useState(_res?.data.contact_number);
-  const [currentAddress, setCurrentAddress] = useState(
-    _res?.data.current_address
-  );
-  const [permanentAddress, setPermanentAddress] = useState(
-    _res?.data.permanent_address
-  );
-  const [email, setEmail] = useState(_res?.data.email);
-  const [birthday, setBirthday] = useState(
-    _res?.data.birthday
-      ? new Date(_res?.data.birthday + 'T15:00:00Z')
-      : new Date('2022-07-02T15:00:00Z')
-  );
-  const [photoUrl, setPhotoUrl] = useState(
-    _res?.data.profile_photo[0] ? _res?.data.profile_photo[0].photo_url : 'None'
-  );
-  const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const abortControllerRef = useRef(new AbortController());
-  const firstMount = useRef(true);
   let isDisabled = !currentUser;
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const abortControllerRefCurrent = abortControllerRef.current;
-    let fetchCurrentUser = async () => {
-      let res = await getCurrentUser(abortControllerRefCurrent);
-      if (res?.status === 200) {
-        let currentUser = res.data;
-        if (currentUser.birthday) {
-          setBirthday(new Date(currentUser.birthday + 'T15:00:00Z'));
-        } else {
-          setBirthday(new Date('2022-07-02T15:00:00Z'));
+  const { data } = useQuery(
+    [reactQueryKeys.currentUser],
+    () => getCurrentUser(abortControllerRef.current),
+    {
+      onSuccess: ({ status }) => {
+        if (status == 404 || status == 422) {
+          router.push('/usernotfound');
         }
-        if (res.data.profile_photo?.length > 0) {
-          setPhotoUrl(res.data.profile_photo[0].photo_url);
-        }
-        setId(currentUser.id);
-        setName(currentUser.name);
-        setWechatId(currentUser.wechatId);
-        setPublicProfile(currentUser.public);
-        setPreferredName(currentUser.preferred_name);
-        setBio(currentUser.bio);
-        setGender(currentUser.gender);
-        setContact(currentUser.contact_number);
-        setCurrentAddress(currentUser.current_address);
-        setPermanentAddress(currentUser.permanent_address);
-        setEmail(currentUser.email);
-        setLoading(false);
-      } else if (res?.status == 404 || res?.status == 422) {
-        router.push('/usernotfound');
-      }
-    };
-    if (!_res) {
-      fetchCurrentUser();
+      },
+      onError: () => {
+        swal('An error occured').then(
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000)
+        );
+      },
+      enabled: !_res,
     }
-    return () => {
-      abortControllerRefCurrent.abort();
-    };
-  }, [_res]);
+  );
+  const { data: _currentUser } = data || _res || {};
 
-  useEffect(() => {
-    let handleUpdate = async () => {
-      await updateUser({
-        name: name,
-        wechatId: wechatId,
-        public: publicProfile,
-        preferred_name: preferredName,
-        bio: bio,
-        gender: gender,
-        contact_number: contact,
-        current_address: currentAddress,
-        permanent_address: permanentAddress,
-        birthday: birthday?.yyyymmdd(),
-      });
-    };
-    if (!isDisabled && !loading) {
-      // we check for firstMount only after loading is completed. This ensure handleUpdate is not called after fetchCurrentUser() is completed
-      if (firstMount.current) {
-        firstMount.current = false;
-        return;
-      }
-      handleUpdate();
+  const { mutate: updateUserData } = useMutation(
+    (userData) => updateUser(userData),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries([reactQueryKeys.currentUser]); // current user contains the photo_url key
+      },
+      onError: () => {
+        swal('An error occured while updating your data').then(
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000)
+        );
+      },
     }
-  }, [
-    name,
-    wechatId,
-    publicProfile,
-    preferredName,
-    bio,
-    gender,
-    contact,
-    currentAddress,
-    permanentAddress,
-    email,
-    birthday,
-    loading,
-    isDisabled,
-  ]);
+  );
 
-  if (!_res && loading) {
+  const { mutate: uploadProfilePhotoData, isLoading: uploading } = useMutation(
+    (photoData) => uploadProfilePhoto(photoData),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries([reactQueryKeys.currentUser]);
+      },
+      onError: () => {
+        swal('An error occured while uploading your photo').then(
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000)
+        );
+      },
+    }
+  );
+
+  if (!_currentUser) {
     return (
       <div className="m-auto">
         <Spinner size={12} />
@@ -142,7 +96,7 @@ export default function Portfolio({ _res = null, currentUser }) {
           <div className="w-full md:w-3/12 sm:mx-2">
             <div className="bg-white border-t-4 border-blue-400 h-full">
               <div className="image overflow-hidden">
-                {photoUrl !== 'None' ? (
+                {_currentUser.profile_photo[0] ? (
                   // <img
                   //   className="h-auto w-full mx-auto"
                   //   alt="profile photo"
@@ -152,7 +106,7 @@ export default function Portfolio({ _res = null, currentUser }) {
                   // />
                   <Image
                     className="h-auto w-full mx-auto"
-                    src={photoUrl}
+                    src={_currentUser.profile_photo[0].photo_url}
                     alt=""
                     width={600}
                     height={600}
@@ -195,19 +149,15 @@ export default function Portfolio({ _res = null, currentUser }) {
                     </svg>
                   ) : (
                     <div className="text-md grid place-items-center bg-slate-200  text-blue-600">
-                      {photoUrl === 'None' ? (
+                      {_currentUser.profile_photo[0] ? (
                         <CropImage
                           display={t('portfolio:upload_new_photo')}
-                          setUploading={setUploading}
-                          setPhotoUrl={setPhotoUrl}
-                          uploadProfilePhoto={uploadProfilePhoto}
+                          uploadProfilePhoto={uploadProfilePhotoData}
                         />
                       ) : (
                         <CropImage
                           display={t('portfolio:change_profile_photo')}
-                          setUploading={setUploading}
-                          setPhotoUrl={setPhotoUrl}
-                          uploadProfilePhoto={uploadProfilePhoto}
+                          uploadProfilePhoto={uploadProfilePhotoData}
                         />
                       )}
                     </div>
@@ -218,26 +168,30 @@ export default function Portfolio({ _res = null, currentUser }) {
                   <div className="w-full">
                     <Tooltip
                       description={
-                        publicProfile
+                        _currentUser.public
                           ? t('portfolio:make_private')
                           : t('portfolio:make_public')
                       }
                       extraInformation={
-                        publicProfile
+                        _currentUser.public
                           ? t('portfolio:make_private_description')
                           : t('portfolio:make_public_description')
                       }
                     />
                   </div>
                   <div>
-                    {publicProfile ? (
+                    {_currentUser.public ? (
                       <svg
                         className="w-6 h-6 md:w-3 md:h-3 lg:w-6 lg:h-6 text-blue-500 hover:text-fuchsia-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg"
-                        onClick={() => setPublicProfile(!publicProfile)}
+                        onClick={() =>
+                          updateUserData({
+                            public: !_currentUser.public,
+                          })
+                        }
                       >
                         <path
                           strokeLinecap="round"
@@ -257,7 +211,9 @@ export default function Portfolio({ _res = null, currentUser }) {
                           toast.success(t('portfolio:made_public'), {
                             position: toast.POSITION.BOTTOM_RIGHT,
                           });
-                          setPublicProfile(!publicProfile);
+                          updateUserData({
+                            public: !_currentUser.public,
+                          });
                         }}
                       >
                         <path
@@ -275,7 +231,7 @@ export default function Portfolio({ _res = null, currentUser }) {
                       </svg>
                     )}
                   </div>
-                  {publicProfile && (
+                  {_currentUser.public && (
                     <div>
                       <Tooltip
                         description={
@@ -287,7 +243,7 @@ export default function Portfolio({ _res = null, currentUser }) {
                             xmlns="http://www.w3.org/2000/svg"
                             onClick={() =>
                               navigator.clipboard.writeText(
-                                `${process.env.NEXT_PUBLIC_APP_URL}/portfolio/public/${id}`
+                                `${process.env.NEXT_PUBLIC_APP_URL}/portfolio/public/${_currentUser.id}`
                               )
                             }
                           >
@@ -313,8 +269,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                   label={t('portfolio:preferred_name')}
                   name="Preferred name"
                   type="text"
-                  value={preferredName}
-                  onChange={(e) => setPreferredName(e.target.value)}
+                  value={_currentUser.preferred_name}
+                  onChange={(e) =>
+                    updateUserData({ preferred_name: e.target.value })
+                  }
                 />
               </h1>
               <div className="leading-6 w-full h-[20vh] max-h-[10rem] md:h-full md:max-h-[12rem]">
@@ -323,8 +281,8 @@ export default function Portfolio({ _res = null, currentUser }) {
                   label={t('portfolio:bio')}
                   name="Bio"
                   type="text"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  value={_currentUser.bio}
+                  onChange={(e) => updateUserData({ bio: e.target.value })}
                 />
               </div>
             </div>
@@ -359,8 +317,8 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:name')}
                       name="Name"
                       type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      value={_currentUser.name}
+                      onChange={(e) => updateUserData({ name: e.target.value })}
                     />
                   </div>
                   <div className="md:px-4 py-2">
@@ -369,8 +327,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:wechat_id')}
                       name=""
                       type="text"
-                      value={wechatId}
-                      onChange={(e) => setWechatId(e.target.value)}
+                      value={_currentUser.wechatId}
+                      onChange={(e) =>
+                        updateUserData({ wechatId: e.target.value })
+                      }
                     />
                   </div>
 
@@ -380,8 +340,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:gender')}
                       name="Gender"
                       type="text"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
+                      value={_currentUser.gender}
+                      onChange={(e) =>
+                        updateUserData({ gender: e.target.value })
+                      }
                     />
                   </div>
                   <div className="md:px-4 py-2">
@@ -390,8 +352,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:contact_no')}
                       name="Contact No."
                       type="text"
-                      value={contact}
-                      onChange={(e) => setContact(e.target.value)}
+                      value={_currentUser.contact_number}
+                      onChange={(e) =>
+                        updateUserData({ contact_number: e.target.value })
+                      }
                     />
                   </div>
                   <div className="md:px-4 py-2">
@@ -400,8 +364,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:current_address')}
                       name="Current address"
                       type="text"
-                      value={currentAddress}
-                      onChange={(e) => setCurrentAddress(e.target.value)}
+                      value={_currentUser.current_address}
+                      onChange={(e) =>
+                        updateUserData({ current_address: e.target.value })
+                      }
                     />
                   </div>
                   <div className="md:px-4 py-2 pb-0">
@@ -410,8 +376,10 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:permanent_address')}
                       name="Permanent address"
                       type="text"
-                      value={permanentAddress}
-                      onChange={(e) => setPermanentAddress(e.target.value)}
+                      value={_currentUser.permanent_address}
+                      onChange={(e) =>
+                        updateUserData({ permanent_address: e.target.value })
+                      }
                     />
                   </div>
                   <div className="md:px-4 py-2">
@@ -420,8 +388,7 @@ export default function Portfolio({ _res = null, currentUser }) {
                       label={t('portfolio:email')}
                       name="Email"
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={_currentUser.email}
                     />
                   </div>
 
@@ -431,10 +398,14 @@ export default function Portfolio({ _res = null, currentUser }) {
                     </div>
                     <YearMonthDayPicker
                       isDisabled={isDisabled}
-                      selected={birthday}
-                      onChange={(date) => {
-                        setBirthday(date);
-                      }}
+                      selected={
+                        _currentUser.birthday
+                          ? new Date(_currentUser.birthday)
+                          : new Date('2022-07-02T15:00:00Z')
+                      }
+                      onChange={(date) =>
+                        updateUserData({ birthday: date.yyyymmdd() })
+                      }
                       className="border-0 border-b-2 w-full border-gray-200 pb-2 focus:outline-none focus:ring-0 focus:border-black"
                     />
                   </div>

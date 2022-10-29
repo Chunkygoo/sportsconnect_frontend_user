@@ -27,7 +27,7 @@ export default function myuniversities() {
 //         },
 //       })
 //       .catch((e) => {
-//         return e.response;
+//         throw new Error(e);
 //       });
 //     if (res.status === 401) {
 //       return { props: { fromSupertokens: 'needs-refresh' } };
@@ -38,6 +38,6 @@ export default function myuniversities() {
 //       },
 //     };
 //   } catch (error) {
-//     console.log(error);
+//     throw new Error(error);
 //   }
 // }

@@ -6,12 +6,7 @@ import { AiOutlineClose } from 'react-icons/ai';
 import useTranslation from 'next-translate/useTranslation';
 import Image from 'next/image';
 
-export default function CropImage({
-  setUploading,
-  setPhotoUrl,
-  uploadProfilePhoto,
-  display,
-}) {
+export default function CropImage({ uploadProfilePhoto, display }) {
   const { t } = useTranslation();
   const [imgSrc, setImgSrc] = useState('');
   const [imageName, setImageName] = useState('');
@@ -49,10 +44,7 @@ export default function CropImage({
     let uploadBlob = async (blob) => {
       const formData = new FormData();
       formData.append('file', blob, imageName);
-      setUploading(true);
-      let res = await uploadProfilePhoto(formData);
-      setUploading(false);
-      setPhotoUrl(res.data);
+      await uploadProfilePhoto(formData);
     };
     if (completedCrop) {
       previewCanvasRef.current.toBlob((blob) => {

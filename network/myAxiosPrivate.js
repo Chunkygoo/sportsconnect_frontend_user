@@ -8,11 +8,11 @@ const getCsrfToken = async () => {
         withCredentials: true,
       })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res.data.csrf_token;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 };
 

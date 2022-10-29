@@ -25,7 +25,7 @@ const ProgressiveImg = ({ placeholderSrc, src, ...props }) => {
       {...{ src: imgSrc, ...props }}
       alt={props.alt || ''}
       className={`block max-w-full h-auto ${customClass} ${props.className}`}
-      fill={true}
+      layout="fill"
     />
   );
 };

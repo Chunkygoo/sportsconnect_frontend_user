@@ -4,10 +4,10 @@ export async function keepLambdaWarm() {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios.get(`/healthdata`).catch((e) => {
-      return e.response;
+      throw new Error(e);
     });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }

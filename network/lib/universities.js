@@ -6,11 +6,11 @@ export async function getPublicUniversities(limit) {
     let res = await myAxios
       .get(`/universities/public?limit=${limit}`)
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -20,11 +20,11 @@ export async function getUniversities(limit, controller) {
     let res = await myAxios
       .get(`/universities?limit=${limit}`, { signal: controller.signal })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -36,10 +36,10 @@ export async function getInterestedUniversities(limit, controller) {
         signal: controller.signal,
       })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }

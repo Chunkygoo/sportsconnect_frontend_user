@@ -4,11 +4,11 @@ export async function createExperience(createObject) {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios.post(`/experiences`, createObject).catch((e) => {
-      return e.response;
+      throw new Error(e);
     });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -18,11 +18,11 @@ export async function getExperiences(controller) {
     let res = await myAxios
       .get(`/experiences`, { signal: controller.signal })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -32,11 +32,11 @@ export async function updateExperience(id, updateObject) {
     let res = await myAxios
       .put(`/experiences/${id}`, updateObject)
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -44,11 +44,11 @@ export async function deleteExperience(id) {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios.delete(`/experiences/${id}`).catch((e) => {
-      return e.response;
+      throw new Error(e);
     });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -58,10 +58,10 @@ export async function getExperiencesForUser(controller, userId) {
     let res = await myAxios
       .get(`/experiences/user/${userId}`, { signal: controller.signal })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }

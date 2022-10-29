@@ -14,8 +14,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useIdleTimer } from 'react-idle-timer';
 import { keepLambdaWarm } from '../network/lib/lambda';
 import { signOut } from 'supertokens-auth-react/recipe/thirdpartyemailpassword';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import 'react-toastify/dist/ReactToastify.css';
+
+const queryClient = new QueryClient(); // needs to be in the global scope
 
 if (typeof window !== 'undefined') {
   // we only want to call this init function on the frontend, so we check typeof window !== 'undefined'
@@ -113,11 +117,14 @@ function MyApp({ Component, pageProps, ...appProps }) {
   return (
     <Fragment>
       <MyHead />
-      <SuperTokensWrapper>
-        <Layout logOutHelper={logOutHelper}>
-          <Component {...pageProps} />
-        </Layout>
-      </SuperTokensWrapper>
+      <QueryClientProvider client={queryClient}>
+        <SuperTokensWrapper>
+          <Layout logOutHelper={logOutHelper}>
+            <Component {...pageProps} />
+          </Layout>
+        </SuperTokensWrapper>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
       <Offline>
         <Modal
           initialShow={true}

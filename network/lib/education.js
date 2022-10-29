@@ -4,11 +4,11 @@ export async function createEducation(createObject) {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios.post(`/educations`, createObject).catch((e) => {
-      return e.response;
+      throw new Error(e);
     });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -18,11 +18,11 @@ export async function getEducations(controller) {
     let res = await myAxios
       .get(`/educations`, { signal: controller.signal })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -32,11 +32,11 @@ export async function updateEducation(id, updateObject) {
     let res = await myAxios
       .put(`/educations/${id}`, updateObject)
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -44,11 +44,11 @@ export async function deleteEducation(id) {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios.delete(`/educations/${id}`).catch((e) => {
-      return e.response;
+      throw new Error(e);
     });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
 
@@ -58,10 +58,10 @@ export async function getEducationsForUser(controller, userId) {
     let res = await myAxios
       .get(`/educations/user/${userId}`, { signal: controller.signal })
       .catch((e) => {
-        return e.response;
+        throw new Error(e);
       });
     return res;
   } catch (error) {
-    console.log(error);
+    throw new Error(error);
   }
 }
