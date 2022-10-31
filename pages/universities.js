@@ -11,10 +11,18 @@ export default function universities({ _res }) {
 }
 
 export async function getStaticProps() {
-  let res = await getPublicUniversities(-1);
-  return {
-    props: {
-      _res: { data: res.data, status: res.status },
-    },
-  };
+  try {
+    let res = await getPublicUniversities(-1);
+    return {
+      props: {
+        _res: { data: res.data, status: res.status },
+      },
+    };
+  } catch (error) {
+    return {
+      props: {
+        _res: { data: [], status: res.status },
+      },
+    };
+  }
 }

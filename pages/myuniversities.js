@@ -1,13 +1,12 @@
 import React from 'react';
 import UniversitiesGallery from '../components/Universities/UniversitiesGallery';
 import { SessionAuth } from 'supertokens-auth-react/recipe/session';
-import myAxiosPrivate from '../network/myAxiosPrivate';
 
 export default function myuniversities() {
   return (
     <div className="mx-auto max-w-screen-xl max-h-screen-xl min-h-[80vh]">
       <SessionAuth>
-        <UniversitiesGallery mine={true} />
+        <UniversitiesGallery />
       </SessionAuth>
     </div>
   );
@@ -38,6 +37,8 @@ export default function myuniversities() {
 //       },
 //     };
 //   } catch (error) {
-//     throw new Error(error);
+//     if (error.message !== 'CanceledError: canceled') {
+//       throw new Error(e);
+//     }
 //   }
 // }

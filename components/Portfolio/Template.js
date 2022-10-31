@@ -1,86 +1,202 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useRef, useState } from 'react';
 import { AiOutlinePlusSquare } from 'react-icons/ai';
 import ItemRow from './ItemRow';
 import swal from 'sweetalert';
 import {
   createEducation,
+  deleteEducation,
   getEducations,
   getEducationsForUser,
+  updateEducation,
 } from '../../network/lib/education';
 import {
   createExperience,
+  deleteExperience,
   getExperiences,
   getExperiencesForUser,
+  updateExperience,
 } from '../../network/lib/experience';
 import Spinner from '../Spinner';
 import { useRouter } from 'next/router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { reactQueryKeys } from '../../config/reactQueryKeys';
+import { toast } from 'react-toastify';
+import yyyymmdd from '../../utilities/yyyymmdd';
+
+Date.prototype.yyyymmdd = yyyymmdd;
 
 export default function Template({ endpoint, title, isDisabled }) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [createLoading, setCreateLoading] = useState(false);
   const abortControllerRef = useRef(new AbortController());
   const router = useRouter();
+  const queryClient = useQueryClient();
   const userId = router.query.id;
-  useEffect(() => {
-    const abortControllerRefCurrent = abortControllerRef.current;
-    let fetchData = async () => {
-      let res;
-      if (endpoint === '/educations') {
-        if (!userId) res = await getEducations(abortControllerRefCurrent);
-        else
-          res = await getEducationsForUser(abortControllerRefCurrent, userId);
-      } else {
-        if (!userId) res = await getExperiences(abortControllerRefCurrent);
-        else
-          res = await getExperiencesForUser(abortControllerRefCurrent, userId);
-      }
-      if (res?.status == 200) {
-        setData(res?.data);
-        setLoading(false);
-      } else if (res?.status == 404 || res?.status == 422) {
-        router.push('/usernotfound');
-      }
-    };
-    fetchData();
-    return () => {
-      abortControllerRefCurrent.abort();
-    };
-  }, [endpoint, router, userId]);
 
-  let removeDatum = async (index) => {
-    let newData = [...data];
-    newData.splice(index, 1);
-    // make sure key in the list rendered is unique! use id not index
-    setData(newData);
-  };
+  const getItems = endpoint === '/educations' ? getEducations : getExperiences;
+  const getItemsForUser =
+    endpoint === '/educations' ? getEducationsForUser : getExperiencesForUser;
+  const createItem =
+    endpoint === '/educations' ? createEducation : createExperience;
+  const updateItem =
+    endpoint === '/educations' ? updateEducation : updateExperience;
+  const deleteItem =
+    endpoint === '/educations' ? deleteEducation : deleteExperience;
+  const reactQueryKey =
+    endpoint === '/educations'
+      ? reactQueryKeys.educations
+      : reactQueryKeys.experiences;
 
-  let handleCreate = async () => {
-    if (data.length >= 5) {
+  const { data: userData, isLoading } = useQuery(
+    [reactQueryKey],
+    () => getItems(abortControllerRef.current),
+    {
+      onSuccess: ({ data, status }) => {
+        if (status === 200) {
+          setData(data.reduce((a, v) => ({ ...a, [v.id]: v }), {}));
+        } else if (status == 404 || status == 422) {
+          router.push('/usernotfound');
+        }
+      },
+      onError: () => {
+        toast.error('An error occured while getting your data', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      },
+      enabled: !isDisabled,
+    }
+  );
+
+  const { data: publicUserData, isLoading: isLoadingForUser } = useQuery(
+    [reactQueryKey],
+    () => getItemsForUser(abortControllerRef.current, userId),
+    {
+      onSuccess: ({ data, status }) => {
+        if (status === 200) {
+          setData(data.reduce((a, v) => ({ ...a, [v.id]: v }), {}));
+        } else if (status == 404 || status == 422) {
+          router.push('/usernotfound');
+        }
+      },
+      onError: () => {
+        toast.error('An error occured while getting your data', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      },
+      enabled: isDisabled,
+    }
+  );
+  const [data, setData] = useState(
+    userData?.data.reduce((a, v) => ({ ...a, [v.id]: v }), {}) ||
+      publicUserData?.data.reduce((a, v) => ({ ...a, [v.id]: v }), {}) ||
+      {}
+  ); // use object instead of array to prevent random ordering
+
+  let createItemMutationFunction = async (dummyCreateObject) => {
+    if (Object.keys(data).length >= 5) {
       swal(
         'Optimize your portfolio',
         'Please only include the 5 most recent items for a good reading experience. Pick the ones you are proud of!'
       );
       return;
     }
-    setCreateLoading(true);
-    let dummyCreateObject = {
-      description: '',
-      active: false,
-      start_date: '2022-07-16',
-      end_date: '2022-07-16',
-    };
-    let res;
-    if (endpoint === '/educations') {
-      res = await createEducation(dummyCreateObject);
-    } else {
-      res = await createExperience(dummyCreateObject);
-    }
-    if (res.status) {
-      setCreateLoading(false);
-      setData((data) => [...data, res.data]);
+    try {
+      let res = await createItem(dummyCreateObject);
+      if (res.status === 201) {
+        // because creating Item requires us to use the id it returns, we can't do OU
+        setData((prevData) => {
+          const newData = { ...prevData };
+          newData[res.id] = dummyCreateObject;
+          return newData;
+        });
+      }
+    } catch (error) {
+      throw new Error(error);
     }
   };
+
+  const { mutate: handleCreate, isLoading: isCreateLoading } = useMutation(
+    (dummyCreateObject) => createItemMutationFunction(dummyCreateObject),
+    {
+      onError: () => {
+        toast.error('An error occured while creating a new item', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      },
+      // Always refetch after error or success - sync the cache no matter what
+      onSettled: () => {
+        queryClient.invalidateQueries([reactQueryKey]);
+      },
+    }
+  );
+
+  let updateItemMutationFunction = async (_itemData) => {
+    let updateObject = {
+      description: _itemData.description,
+      active: _itemData.active,
+      start_date: _itemData.startDate.yyyymmdd(),
+      end_date:
+        _itemData.endDate !== undefined ? _itemData.endDate.yyyymmdd() : null,
+    };
+    try {
+      await updateItem(_itemData.id, updateObject);
+    } catch (error) {
+      throw new Error(error);
+    }
+  };
+
+  const { mutate: handleUpdate } = useMutation(
+    (itemData) => updateItemMutationFunction(itemData),
+    {
+      onMutate: async (newItemData) => {
+        // Cancel any outgoing updates (so they don't overwrite our optimistic update)
+        await queryClient.cancelQueries([reactQueryKey]);
+        const previousData = queryClient.getQueryData([reactQueryKey]);
+        // Optimistic update
+        setData((prevData) => {
+          const newData = { ...prevData };
+          newItemData.start_date = newItemData.startDate.yyyymmdd();
+          newItemData.end_date = newItemData.endDate.yyyymmdd();
+          newData[newItemData.id] = newItemData;
+          return newData;
+        });
+        return { previousData };
+      },
+      onError: (_, __, context) => {
+        queryClient.setQueryData([reactQueryKey], context.previousData);
+        toast.error('An error occured while updating your data', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      },
+      // Always refetch after error or success - sync the cache no matter what
+      onSettled: () => {
+        queryClient.invalidateQueries([reactQueryKey]);
+      },
+    }
+  );
+
+  const { mutate: handleDelete } = useMutation((id) => deleteItem(id), {
+    onMutate: async (id) => {
+      // Cancel any outgoing updates (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries([reactQueryKey]);
+      const previousData = queryClient.getQueryData([reactQueryKey]);
+      // Optimistic update
+      setData((prevData) => {
+        const newData = { ...prevData };
+        delete newData[id];
+        return newData;
+      });
+      return { previousData };
+    },
+    onError: (_, __, context) => {
+      queryClient.setQueryData([reactQueryKey], context.previousData);
+      toast.error('An error occured while deleting your data', {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    },
+    // Always refetch after error or success - sync the cache no matter what
+    onSettled: () => {
+      queryClient.invalidateQueries([reactQueryKey]);
+    },
+  });
 
   return (
     <Fragment>
@@ -108,20 +224,27 @@ export default function Template({ endpoint, title, isDisabled }) {
             </div>
           </div>
           <span className="float-right pt-1">
-            {createLoading ? (
+            {isCreateLoading ? (
               <Spinner />
             ) : (
               !isDisabled && (
                 <AiOutlinePlusSquare
                   className="h-6 w-6 text-green-400"
-                  onClick={handleCreate}
+                  onClick={() => {
+                    handleCreate({
+                      description: '',
+                      active: false,
+                      start_date: '2022-07-16',
+                      end_date: '2022-07-16',
+                    });
+                  }}
                 />
               )
             )}
           </span>
         </div>
         <ul className="list-inside space-y-2">
-          {loading ? (
+          {isLoading || isLoadingForUser ? (
             <div
               role="status"
               className="text-blue-600 max-w-[100%] animate-pulse"
@@ -140,27 +263,33 @@ export default function Template({ endpoint, title, isDisabled }) {
               </div>
             </div>
           ) : (
-            data.map((datum, index) => {
-              let startDate = new Date(datum.start_date + 'T15:00:00Z');
-              let endDate = new Date(datum.start_date + 'T15:00:00Z');
-              if (!datum.active) {
-                endDate = new Date(datum.end_date + 'T15:00:00Z');
-              }
-              return (
-                <ItemRow
-                  key={datum.id}
-                  index={index}
-                  removeItem={removeDatum}
-                  id={datum.id}
-                  description={datum.description}
-                  startDate={startDate}
-                  endDate={endDate}
-                  active={datum.active}
-                  endpoint={endpoint}
-                  isDisabled={isDisabled}
-                />
-              );
-            })
+            Object.keys(data)
+              .map((key) => data[key])
+              .map((datum) => {
+                const startDate = new Date(datum.start_date + 'T15:00:00Z');
+                const endDate = datum.active
+                  ? new Date(datum.start_date + 'T15:00:00Z')
+                  : (endDate = new Date(datum.end_date + 'T15:00:00Z'));
+                const itemRowObject = {
+                  id: datum.id,
+                  active: datum.active,
+                  description: datum.description,
+                  startDate: startDate,
+                  endDate: endDate,
+                };
+                return (
+                  <ItemRow
+                    key={datum.id}
+                    endpoint={endpoint}
+                    isDisabled={isDisabled}
+                    isCreateLoading={isCreateLoading}
+                    itemRowObject={itemRowObject}
+                    reactQueryKey={reactQueryKey}
+                    handleUpdate={handleUpdate}
+                    handleDelete={handleDelete}
+                  />
+                );
+              })
           )}
         </ul>
       </div>

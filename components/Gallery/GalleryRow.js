@@ -1,7 +1,7 @@
 import React from 'react';
 import GalleryItem from './GalleryItem';
 
-export default function GalleryRow({ dataChunk, updateTickedUni }) {
+export default function GalleryRow({ dataChunk, setAllUnis, mine }) {
   return (
     <>
       <section className="overflow-hidden text-gray-700 ">
@@ -13,7 +13,8 @@ export default function GalleryRow({ dataChunk, updateTickedUni }) {
                 <GalleryItem
                   key={dataChunk[0].id}
                   datum={dataChunk[0]}
-                  updateTickedUni={updateTickedUni}
+                  setAllUnis={setAllUnis}
+                  mine={mine}
                 />
               )
             }
@@ -23,7 +24,8 @@ export default function GalleryRow({ dataChunk, updateTickedUni }) {
                 <GalleryItem
                   key={dataChunk[1]?.id}
                   datum={dataChunk[1]}
-                  updateTickedUni={updateTickedUni}
+                  setAllUnis={setAllUnis}
+                  mine={mine}
                 />
               )
             }
@@ -33,7 +35,8 @@ export default function GalleryRow({ dataChunk, updateTickedUni }) {
                 <GalleryItem
                   key={dataChunk[2]?.id}
                   datum={dataChunk[2]}
-                  updateTickedUni={updateTickedUni}
+                  setAllUnis={setAllUnis}
+                  mine={mine}
                 />
               )
             }

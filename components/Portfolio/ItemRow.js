@@ -1,78 +1,19 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useRef } from 'react';
 import autosize from 'autosize';
-import yyyymmdd from '../../utilities/yyyymmdd';
 import { TrashIcon } from '@heroicons/react/solid';
 import { DebounceInput } from 'react-debounce-input';
 import useTranslation from 'next-translate/useTranslation';
-import { deleteEducation, updateEducation } from '../../network/lib/education';
-import {
-  deleteExperience,
-  updateExperience,
-} from '../../network/lib/experience';
 import YearMonthDayPicker from '../DatePicker/YearMonthDayPicker';
 
-Date.prototype.yyyymmdd = yyyymmdd;
-
 export default function ItemRow({
-  description,
-  startDate,
-  endDate,
-  active,
-  id,
-  index,
-  removeItem,
-  endpoint,
   isDisabled,
+  itemRowObject,
+  handleUpdate,
+  handleDelete,
+  isCreateLoading,
 }) {
   const { t } = useTranslation();
-  let [currentActive, setCurrentActive] = useState(active);
-  let [currentDescription, setCurrentDescription] = useState(description);
-  let [currentStartDate, setCurrentStartDate] = useState(startDate);
-  let [currentEndDate, setCurrentEndDate] = useState(endDate);
-  const firstRun = useRef(true);
   const textareaRef = useRef(null);
-
-  let handleDelete = async () => {
-    if (endpoint === '/educations') {
-      await deleteEducation(id);
-    } else {
-      await deleteExperience(id);
-    }
-  };
-
-  useEffect(() => {
-    let handleUpdate = async () => {
-      let updateObject = {
-        description: currentDescription,
-        active: currentActive,
-        start_date: currentStartDate.yyyymmdd(),
-        end_date: null,
-      };
-      if (currentEndDate !== undefined) {
-        updateObject.end_date = currentEndDate.yyyymmdd();
-      }
-      if (endpoint === '/educations') {
-        await updateEducation(id, updateObject);
-      } else {
-        await updateExperience(id, updateObject);
-      }
-    };
-
-    // we do not want to update on mount
-    if (firstRun.current) {
-      firstRun.current = false;
-    } else {
-      handleUpdate();
-    }
-  }, [
-    currentDescription,
-    currentActive,
-    currentStartDate,
-    currentEndDate,
-    endpoint,
-    id,
-  ]);
-
   useEffect(() => {
     autosize(textareaRef.current);
   }, []);
@@ -90,8 +31,10 @@ export default function ItemRow({
             element="textarea"
             rows="1"
             placeholder={t('portfolio:add_a_description')}
-            value={currentDescription}
-            onChange={(e) => setCurrentDescription(e.target.value)}
+            value={itemRowObject.description}
+            onChange={(e) =>
+              handleUpdate({ ...itemRowObject, description: e.target.value })
+            }
             className="pt-3 pb-2  w-full px-0 mt-0 border-0 border-b-2 appearance-none focus:outline-none focus:ring-0 focus:border-black border-gray-200"
           />
           {!isDisabled && (
@@ -99,8 +42,7 @@ export default function ItemRow({
               <TrashIcon
                 className="h-5 w-5 hover:cursor-pointer text-red-500"
                 onClick={() => {
-                  removeItem(index);
-                  handleDelete();
+                  handleDelete(itemRowObject.id);
                 }}
               />
             </span>
@@ -110,23 +52,23 @@ export default function ItemRow({
           <div className="flex">
             <YearMonthDayPicker
               isDisabled={isDisabled}
-              selected={currentStartDate}
+              selected={itemRowObject.startDate}
               onChange={(date) => {
-                setCurrentStartDate(date);
+                handleUpdate({ ...itemRowObject, startDate: date });
               }}
               className="border-0 p-0 max-w-[4rem] text-xs border-gray-200 m-0 
                           hover:cursor-pointer focus:outline-none focus:ring-0 focus:border-black"
               wrapperClassName="max-w-[4.2rem] mr-1"
             />{' '}
             to{' '}
-            {currentActive ? (
+            {itemRowObject.active ? (
               <span className="ml-2">present</span>
             ) : (
               <YearMonthDayPicker
                 isDisabled={isDisabled}
-                selected={currentEndDate}
+                selected={itemRowObject.endDate}
                 onChange={(date) => {
-                  setCurrentEndDate(date);
+                  handleUpdate({ ...itemRowObject, endDate: date });
                 }}
                 className="border-0 p-0 max-w-[4rem] text-xs border-gray-200 m-0
                           hover:cursor-pointer focus:outline-none focus:ring-0 focus:border-black"
@@ -134,12 +76,15 @@ export default function ItemRow({
               />
             )}
           </div>
-          {currentActive ? (
+          {itemRowObject.active ? (
             <div
               className="mr-10 hover:cursor-pointer"
               onClick={() => {
                 if (isDisabled) return;
-                setCurrentActive(!currentActive);
+                handleUpdate({
+                  ...itemRowObject,
+                  active: !itemRowObject.active,
+                });
               }}
             >
               {t('portfolio:active')}
@@ -149,7 +94,10 @@ export default function ItemRow({
               className="mr-8 hover:cursor-pointer"
               onClick={() => {
                 if (isDisabled) return;
-                setCurrentActive(!currentActive);
+                handleUpdate({
+                  ...itemRowObject,
+                  active: !itemRowObject.active,
+                });
               }}
             >
               {t('portfolio:inactive')}

@@ -7,6 +7,8 @@ export async function sendEmail(payload) {
       throw new Error(e);
     });
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }

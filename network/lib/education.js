@@ -8,7 +8,9 @@ export async function createEducation(createObject) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -22,7 +24,9 @@ export async function getEducations(controller) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -36,19 +40,23 @@ export async function updateEducation(id, updateObject) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
 export async function deleteEducation(id) {
   try {
     let myAxios = await myAxiosPrivate();
-    let res = await myAxios.delete(`/educations/${id}`).catch((e) => {
+    let res = await myAxios.delete(`/educationsxxx/${id}`).catch((e) => {
       throw new Error(e);
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -62,6 +70,8 @@ export async function getEducationsForUser(controller, userId) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }

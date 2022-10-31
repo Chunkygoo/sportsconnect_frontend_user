@@ -15,7 +15,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
   return (
     <ul className="DESKTOP-MENU space-x-8 hidden lg:flex">
       <li>
-        <Link href="/home">
+        <Link href={router.asPath !== '/home' ? '/home' : '#'}>
           <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
@@ -33,7 +33,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
         <UniversityDropdown />
       </li>
       <li>
-        <Link href="/steps">
+        <Link href={router.asPath !== '/steps' ? '/steps' : '#'}>
           <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
@@ -48,7 +48,7 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
         </Link>
       </li>
       <li>
-        <Link href="/portfolio">
+        <Link href={router.asPath !== '/portfolio' ? '/portfolio' : '#'}>
           <span
             className={
               'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +
@@ -66,7 +66,13 @@ export default function HeaderNavLarge({ loggingOut, handleLogout }) {
       {!doesSessionExist ? (
         <Fragment>
           <li>
-            <Link href="/auth/loginsignup">
+            <Link
+              href={
+                router.asPath !== '/auth/loginsignup'
+                  ? '/auth/loginsignup'
+                  : '#'
+              }
+            >
               <span
                 className={
                   'block py-2 pr-4 pl-3 text-gray-700 rounded lg:bg-transparent lg:p-0 hover:border-b hover:border-gray-800 hover:text-blue-700 ' +

@@ -10,7 +10,9 @@ export async function getCurrentUser(controller) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -22,7 +24,9 @@ export async function updateUser(updateObject) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error); // instead of redirecting, we want to rollback our optimistic updates
+    }
   }
 }
 
@@ -30,13 +34,15 @@ export async function uploadProfilePhoto(formData) {
   try {
     let myAxios = await myAxiosPrivate();
     let res = await myAxios
-      .post('/users/profile_photo', formData)
+      .post('/users/profile_photoz', formData)
       .catch((e) => {
         throw new Error(e);
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error); // instead of redirecting, we want to rollback our optimistic updates
+    }
   }
 }
 
@@ -48,7 +54,9 @@ export async function expressInterestInUni(uniId) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -60,7 +68,9 @@ export async function removeInterestInUni(uniId) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -74,6 +84,8 @@ export async function getUser(controller, userId) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error); // ssr has no window
+    }
   }
 }

@@ -35,7 +35,7 @@ export default function UniversityDropdown({ navSmall, setIsNavOpen }) {
           aria-haspopup="true"
           onClick={() => setShowUni(!showUni)}
         >
-          {urlPath === '/universities'
+          {urlPath === '/universities' || urlPath === '/universities#'
             ? t('header:all_universities')
             : t('header:my_universities')}
         </span>
@@ -53,7 +53,10 @@ export default function UniversityDropdown({ navSmall, setIsNavOpen }) {
         >
           <div className="py-1" role="none">
             {uniRoutes.map((uniRoute, index) => (
-              <Link href={uniRoute} key={index}>
+              <Link
+                href={router.asPath !== uniRoute ? uniRoute : '#'}
+                key={index}
+              >
                 <span
                   className="text-gray-700 block px-4 py-2 text-sm"
                   onClick={() => {

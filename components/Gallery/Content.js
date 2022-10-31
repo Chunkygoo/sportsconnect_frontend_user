@@ -1,18 +1,18 @@
 import useTranslation from 'next-translate/useTranslation';
 import Image from 'next/image';
 import React from 'react';
-import ProgressiveImg from '../ProgressiveImage';
 import CheckBox from '../Universities/CheckBox';
 import IconCross from './../Icons/IconCross';
 
-const Content = ({ uni, onClose, updateTickedUni }) => {
+const Content = ({ uni, onClose, setAllUnis, mine }) => {
   const { t } = useTranslation();
   const checkBox = (
     <CheckBox
       interested={uni.interested}
       uniId={uni.id}
       index={uni.index}
-      updateTickedUni={updateTickedUni}
+      setAllUnis={setAllUnis}
+      mine={mine}
       category={uni.category}
       prev={uni.prev}
       isPrev={false}
@@ -25,7 +25,8 @@ const Content = ({ uni, onClose, updateTickedUni }) => {
         interested={uni.prev.interested}
         uniId={uni.prev.id}
         index={uni.prev.index}
-        updateTickedUni={updateTickedUni}
+        setAllUnis={setAllUnis}
+        mine={mine}
         category={uni.prev.category}
         isPrev={true}
       />

@@ -50,7 +50,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
         </div>
         <ul className="flex flex-col items-center justify-between min-h-[250px]">
           <li>
-            <Link href="/home">
+            <Link href={router.asPath !== '/home' ? '/home' : '#'}>
               <span
                 onClick={() => {
                   setIsNavOpen(false);
@@ -71,7 +71,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
             <UniversityDropdown navSmall={true} setIsNavOpen={setIsNavOpen} />
           </li>
           <li>
-            <Link href="/steps">
+            <Link href={router.asPath !== '/steps' ? '/steps' : '#'}>
               <span
                 onClick={() => {
                   setIsNavOpen(false);
@@ -89,7 +89,7 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
             </Link>
           </li>
           <li>
-            <Link href="/portfolio">
+            <Link href={router.asPath !== '/portfolio' ? '/portfolio' : '#'}>
               <span
                 onClick={() => {
                   setIsNavOpen(false);
@@ -108,7 +108,13 @@ export default function HeaderNavSmall({ loggingOut, handleLogout }) {
           {!doesSessionExist ? (
             <Fragment>
               <li>
-                <Link href="/auth/loginsignup">
+                <Link
+                  href={
+                    router.asPath !== '/auth/loginsignup'
+                      ? '/auth/loginsignup'
+                      : '#'
+                  }
+                >
                   <span
                     onClick={() => {
                       setIsNavOpen(false);

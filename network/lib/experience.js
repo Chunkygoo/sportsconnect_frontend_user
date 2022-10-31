@@ -8,7 +8,9 @@ export async function createExperience(createObject) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -22,7 +24,9 @@ export async function getExperiences(controller) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -36,7 +40,9 @@ export async function updateExperience(id, updateObject) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -48,7 +54,9 @@ export async function deleteExperience(id) {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }
 
@@ -62,6 +70,8 @@ export async function getExperiencesForUser(controller, userId) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }

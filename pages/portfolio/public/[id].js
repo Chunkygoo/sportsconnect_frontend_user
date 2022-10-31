@@ -15,17 +15,18 @@ export default function publicPortfolio({ _res }) {
 export async function getServerSideProps(context) {
   const { params } = context;
   const userId = params.id;
-  let res = await getUser(null, userId);
-  if (res.data.detail === 'The user does not exist') {
+  try {
+    let res = await getUser(null, userId);
+    return {
+      props: {
+        _res: { data: res.data, status: res.status },
+      },
+    };
+  } catch (error) {
     return {
       redirect: {
         destination: '/usernotfound',
       },
     };
   }
-  return {
-    props: {
-      _res: { data: res.data, status: res.status },
-    },
-  };
 }

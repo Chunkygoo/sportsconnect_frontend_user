@@ -10,7 +10,9 @@ export async function getPublicUniversities(limit) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(e);
+    }
   }
 }
 
@@ -24,7 +26,9 @@ export async function getUniversities(limit, controller) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(e);
+    }
   }
 }
 
@@ -40,6 +44,8 @@ export async function getInterestedUniversities(limit, controller) {
       });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(e);
+    }
   }
 }

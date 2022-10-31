@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Content from './Content';
 
-export default function DetailModal({ display, uni, updateTickedUni }) {
+export default function DetailModal({ display, uni, setAllUnis, mine }) {
   const [showModal, setShowModal] = useState(false);
   // prevent scroll when modal is open
   const firstMount = useRef(true);
@@ -46,7 +46,8 @@ export default function DetailModal({ display, uni, updateTickedUni }) {
               <Content
                 uni={uni}
                 onClose={() => setShowModal(false)}
-                updateTickedUni={updateTickedUni}
+                setAllUnis={setAllUnis}
+                mine={mine}
               />
             </div>
           </div>

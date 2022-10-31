@@ -12,19 +12,25 @@ export default function ContactUs() {
   let router = useRouter();
   let sendEmailAndRedirect = async (e) => {
     e.preventDefault();
-    let res = await sendEmail({
-      name: name,
-      email: email,
-      message: message,
-    });
-    if (res.status === 401) {
-      router.push('/auth/loginsignup');
-      toast.error(t('contactus:login_to_send_email'), {
-        position: toast.POSITION.BOTTOM_RIGHT,
+    try {
+      let res = await sendEmail({
+        name: name,
+        email: email,
+        message: message,
       });
-    } else {
-      router.push('/home');
-      toast.success(t('contactus:email_sent'), {
+      if (res.status === 401) {
+        router.push('/auth/loginsignup');
+        toast.error(t('contactus:login_to_send_email'), {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      } else {
+        router.push('/home');
+        toast.success(t('contactus:email_sent'), {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      }
+    } catch (error) {
+      toast.error('An error occured while sending us an email', {
         position: toast.POSITION.BOTTOM_RIGHT,
       });
     }

@@ -3,7 +3,7 @@ import React from 'react';
 import ProgressiveImg from '../ProgressiveImage';
 import DetailModal from './DetailModal';
 
-export default function GalleryItem({ datum, updateTickedUni }) {
+export default function GalleryItem({ datum, setAllUnis, mine }) {
   let display = datum && (
     <div className="flex flex-wrap w-[95%]">
       <div className="w-full p-1 md:p-2 shadow-xl rounded-lg">
@@ -33,7 +33,8 @@ export default function GalleryItem({ datum, updateTickedUni }) {
     <DetailModal
       display={display}
       uni={datum}
-      updateTickedUni={updateTickedUni}
+      setAllUnis={setAllUnis}
+      mine={mine}
     />
   );
 }

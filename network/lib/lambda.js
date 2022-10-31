@@ -8,6 +8,8 @@ export async function keepLambdaWarm() {
     });
     return res;
   } catch (error) {
-    throw new Error(error);
+    if (error.message !== 'CanceledError: canceled') {
+      throw new Error(error);
+    }
   }
 }

@@ -32,9 +32,15 @@ function MyApp({ Component, pageProps, ...appProps }) {
 
   // Workaround for Lambda warm start (probably dont need this since we are executing getCurrentUser every 3 seconds)
   const intervalRef = useRef(null); // we use a ref and not a variable because variables get reassigned (therefore creating another timer) upon rerender
-  const startLambdaAndKeepWarm = () => {
-    keepLambdaWarm(); // initial warm up
-    intervalRef.current = setInterval(keepLambdaWarm, 1000 * 60 * 5); // warm up every 5 mins
+  const startLambdaAndKeepWarm = async () => {
+    try {
+      await keepLambdaWarm(); // initial warm up
+      intervalRef.current = setInterval(keepLambdaWarm, 1000 * 60 * 5); // warm up every 5 mins
+    } catch (error) {
+      toast.error('An error occured while starting our servers', {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    }
   };
 
   const handleOnIdle = () => {
@@ -138,3 +144,4 @@ function MyApp({ Component, pageProps, ...appProps }) {
 }
 
 export default MyApp;
+export { queryClient };

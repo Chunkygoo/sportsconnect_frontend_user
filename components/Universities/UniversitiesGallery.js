@@ -18,13 +18,14 @@ import {
   getUniversities,
 } from '../../network/lib/universities';
 import Session from 'supertokens-auth-react/recipe/session';
+import { reactQueryKeys } from '../../config/reactQueryKeys';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
-export default function UniversitiesGallery({ mine, _res }) {
-  const [allUnis, setAllUnis] = useState(_res?.data || []);
+export default function UniversitiesGallery({ _res }) {
   const [searchIndex, setSearchIndex] = useState(24);
   const [hasMore, setHasMore] = useState(true);
   const [loadingUnis, _] = useState(false);
-  const [loading, setLoading] = useState(!_res);
   const [selectedCategory, setSelectedCategory] = useState(cateGoryOptions[0]);
   const [selectedConference, setSelectedConference] = useState(
     conferenceOptions[0]
@@ -35,6 +36,34 @@ export default function UniversitiesGallery({ mine, _res }) {
   const [search, setSearch] = useState('');
   const abortControllerRef = useRef(new AbortController());
   const { t } = useTranslation();
+
+  var mine = !_res; // needs to be var to avoid scope errors
+
+  const getUnis = mine ? getInterestedUniversities : getUniversities;
+  const getUnisFunction = async (limit) => {
+    if (!(await Session.doesSessionExist())) return; // /myuniversities would always execute the below code. /universities would run it only if the user is logged in
+    const abortControllerRefCurrent = abortControllerRef.current;
+    return await getUnis(limit, abortControllerRefCurrent);
+  };
+  const { data: uniData, isLoading: loading } = useQuery(
+    [reactQueryKeys.universities, mine],
+    () => getUnisFunction(-1),
+    {
+      onSuccess: ({ data, status }) => {
+        if (status === 200) {
+          setAllUnis(data);
+        } else if (status == 404 || status == 422) {
+          router.push('/error');
+        }
+      },
+      onError: () => {
+        toast.error('An error occured while retrieving universities', {
+          position: toast.POSITION.BOTTOM_RIGHT,
+        });
+      },
+    }
+  );
+  const [allUnis, setAllUnis] = useState(_res?.data || uniData?.data || []);
   const searchedUnis = filterUni(transformUnis(allUnis), search);
 
   useEffect(() => {
@@ -56,27 +85,6 @@ export default function UniversitiesGallery({ mine, _res }) {
       setHasMore(true);
     }
   }, [searchIndex, searchedUnis]);
-
-  useEffect(() => {
-    const abortControllerRefCurrent = abortControllerRef.current;
-    let fetchAllUnis = async (limit) => {
-      if (!(await Session.doesSessionExist())) return; // /myuniversities would always execute the below code. /universities would run it only if the user is logged in
-      let res;
-      if (mine) {
-        res = await getInterestedUniversities(limit, abortControllerRefCurrent);
-        setLoading(false); // /myuniversities does not have getStaticProps so loading state was initialized to true
-      } else {
-        res = await getUniversities(limit, abortControllerRefCurrent);
-      }
-      if (res?.status === 200) {
-        setAllUnis(res.data);
-      }
-    };
-    fetchAllUnis(-1);
-    return () => {
-      abortControllerRefCurrent.abort();
-    };
-  }, [mine]);
 
   function transformUnis(unis) {
     let transformedUnis = {};
@@ -110,17 +118,6 @@ export default function UniversitiesGallery({ mine, _res }) {
       return transformedUnis[k];
     });
   }
-
-  let updateTickedUni = (isChecked, index) => {
-    setAllUnis((prevAllUnis) => {
-      let newAllUnis = [...prevAllUnis];
-      newAllUnis[index] = {
-        ...prevAllUnis[index],
-        interested: !isChecked,
-      };
-      return newAllUnis;
-    });
-  };
 
   // needs to use the "function" keyword to allow hoisting
   function filterUni(unis, search) {
@@ -302,7 +299,8 @@ export default function UniversitiesGallery({ mine, _res }) {
               <GalleryRow
                 key={uniChunk[0].id}
                 dataChunk={uniChunk}
-                updateTickedUni={updateTickedUni}
+                setAllUnis={setAllUnis}
+                mine={mine}
               />
             )
           )}
