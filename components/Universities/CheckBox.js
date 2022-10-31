@@ -19,6 +19,7 @@ export default memo(function CheckBox({
   prev,
   isPrev,
   mine,
+  searchTerm,
 }) {
   let session = useSessionContext();
   let { doesSessionExist } = session;
@@ -37,9 +38,15 @@ export default memo(function CheckBox({
     {
       onMutate: async (_uniId) => {
         // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-        await queryClient.cancelQueries([reactQueryKeys.universities, mine]);
+        await queryClient.cancelQueries([
+          reactQueryKeys.universities,
+          mine,
+          searchTerm,
+        ]);
         const previousUniData = queryClient.getQueryData([
-          reactQueryKeys.currentUser,
+          reactQueryKeys.universities,
+          mine,
+          searchTerm,
         ]);
         // Optimistic update
         setAllUnis((prevAllUnis) => {
@@ -54,7 +61,7 @@ export default memo(function CheckBox({
       },
       onError: (_, __, context) => {
         queryClient.setQueryData(
-          [reactQueryKeys.universities, mine],
+          [reactQueryKeys.universities, mine, searchTerm],
           context.previousUniData
         );
         toast.error('An error occured while updating your data', {
@@ -63,7 +70,11 @@ export default memo(function CheckBox({
       },
       // Always refetch after error or success - sync the cache no matter what
       onSettled: () => {
-        queryClient.invalidateQueries([reactQueryKeys.universities, mine]);
+        queryClient.invalidateQueries([
+          reactQueryKeys.universities,
+          mine,
+          searchTerm,
+        ]);
       },
     }
   );

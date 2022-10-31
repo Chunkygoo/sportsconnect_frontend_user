@@ -1,22 +1,28 @@
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Content from './Content';
 
-export default function DetailModal({ display, uni, setAllUnis, mine }) {
+export default function DetailModal({
+  display,
+  uni,
+  setAllUnis,
+  mine,
+  searchTerm,
+}) {
   const [showModal, setShowModal] = useState(false);
   // prevent scroll when modal is open
-  const firstMount = useRef(true);
-
-  useEffect(() => {
-    if (firstMount.current) {
-      firstMount.current = false;
-      return;
-    }
-    if (showModal) {
-      document.body.style.overflow = 'hidden';
-    } else if (!showModal && !firstMount.current) {
-      document.body.style.overflow = 'unset';
-    }
-  }, [showModal]);
+  // const firstMount = useRef(true);
+  // useEffect(() => {
+  //   if (firstMount.current) {
+  //     firstMount.current = false;
+  //     return;
+  //   }
+  //   if (showModal) {
+  //     document.body.style.overflow = 'hidden';
+  //   } else if (!showModal && !firstMount.current) {
+  //     document.body.style.overflow = 'unset';
+  //   }
+  // }, [showModal]);
+  // prevent scroll when modal is open
 
   return (
     <Fragment>
@@ -48,6 +54,7 @@ export default function DetailModal({ display, uni, setAllUnis, mine }) {
                 onClose={() => setShowModal(false)}
                 setAllUnis={setAllUnis}
                 mine={mine}
+                searchTerm={searchTerm}
               />
             </div>
           </div>

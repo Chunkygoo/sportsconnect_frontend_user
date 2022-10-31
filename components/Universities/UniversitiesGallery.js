@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Spinner from '../Spinner';
@@ -15,15 +15,16 @@ import {
 import SelectDropdown from './SelectDropdown';
 import {
   getInterestedUniversities,
+  getPublicUniversities,
   getUniversities,
 } from '../../network/lib/universities';
 import Session from 'supertokens-auth-react/recipe/session';
 import { reactQueryKeys } from '../../config/reactQueryKeys';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function UniversitiesGallery({ _res }) {
-  const [searchIndex, setSearchIndex] = useState(24);
   const [hasMore, setHasMore] = useState(true);
   const [loadingUnis, _] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(cateGoryOptions[0]);
@@ -34,29 +35,57 @@ export default function UniversitiesGallery({ _res }) {
   const [selectedRegion, setSelectedRegion] = useState(regionOptions[0]);
   const [selectedDivision, setSelectedDivision] = useState(divisionOptions[0]);
   const [search, setSearch] = useState('');
+
   const abortControllerRef = useRef(new AbortController());
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [count, setCount] = useState(24);
 
   var mine = !_res; // needs to be var to avoid scope errors
 
+  const searchTerm = [
+    search,
+    selectedState.value,
+    selectedConference.value,
+    selectedDivision.value,
+    selectedRegion.value,
+    selectedCategory.value,
+  ].join('***'); // just pick a unique value to join that matches the backend (didn't use coma since the values may contain comas). Any key is fine as long as the frontend values don't contain them
+
+  const resetLength =
+    queryClient.getQueryData([reactQueryKeys.universities, mine, searchTerm])
+      ?.data.length || 24;
   const getUnis = mine ? getInterestedUniversities : getUniversities;
-  const getUnisFunction = async (limit) => {
-    if (!(await Session.doesSessionExist())) return; // /myuniversities would always execute the below code. /universities would run it only if the user is logged in
-    const abortControllerRefCurrent = abortControllerRef.current;
-    return await getUnis(limit, abortControllerRefCurrent);
-  };
+  const getUnisFunction = useCallback(
+    async (limit, skip, search = '') => {
+      const abortControllerRefCurrent = abortControllerRef.current;
+      if (!(await Session.doesSessionExist())) {
+        return await getPublicUniversities(
+          limit,
+          abortControllerRefCurrent,
+          skip,
+          search
+        );
+      }
+      return await getUnis(limit, abortControllerRefCurrent, skip, search);
+    },
+    [getUnis]
+  );
+
   const { data: uniData, isLoading: loading } = useQuery(
-    [reactQueryKeys.universities, mine],
-    () => getUnisFunction(-1),
+    [reactQueryKeys.universities, mine, searchTerm],
+    () => getUnisFunction(resetLength, 0, searchTerm),
     {
       onSuccess: ({ data, status }) => {
         if (status === 200) {
           setAllUnis(data);
+          setCount(resetLength);
+          setHasMore(true);
         } else if (status == 404 || status == 422) {
           router.push('/error');
         }
       },
-      onError: () => {
+      onError: async () => {
         toast.error('An error occured while retrieving universities', {
           position: toast.POSITION.BOTTOM_RIGHT,
         });
@@ -64,27 +93,51 @@ export default function UniversitiesGallery({ _res }) {
     }
   );
   const [allUnis, setAllUnis] = useState(_res?.data || uniData?.data || []);
-  const searchedUnis = filterUni(transformUnis(allUnis), search);
+  const searchedUnis = transformUnis(allUnis);
 
+  // optimistic retrieve - if data in cache, use it. The reason we can't use useQuery to do this for us is because
+  // searchTerm in [reactQueryKeys.universities, mine, searchTerm] changes
   useEffect(() => {
-    setHasMore(true);
-    setSearchIndex(24);
-  }, [
-    search,
-    selectedCategory,
-    selectedConference,
-    selectedDivision,
-    selectedRegion,
-    selectedState,
-  ]);
-
-  useEffect(() => {
-    if (searchIndex > searchedUnis.length) {
-      setHasMore(false);
-    } else {
+    const cachedData = queryClient.getQueryData([
+      reactQueryKeys.universities,
+      mine,
+      searchTerm,
+    ])?.data;
+    if (cachedData) {
+      setAllUnis(cachedData);
+      setCount(resetLength);
       setHasMore(true);
     }
-  }, [searchIndex, searchedUnis]);
+  }, [mine, queryClient, resetLength, searchTerm]);
+
+  useEffect(() => {
+    if (count > allUnis.length) {
+      setHasMore(false);
+    }
+  }, [count, allUnis.length]);
+
+  const fetchMoreData = async () => {
+    try {
+      let res = await getUnisFunction(9, count, searchTerm);
+      setCount((prevCount) => prevCount + 9);
+      setAllUnis((prevUnis) => {
+        const newAllUnis = [].concat(prevUnis, res.data);
+        queryClient.setQueryData(
+          [reactQueryKeys.universities, mine, searchTerm],
+          (oldQueryObj) => {
+            const newQueryObj = { ...oldQueryObj };
+            newQueryObj.data = newAllUnis;
+            return newQueryObj;
+          }
+        );
+        return newAllUnis;
+      });
+    } catch (error) {
+      toast.error('An error occured while retrieving more universities', {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    }
+  };
 
   function transformUnis(unis) {
     let transformedUnis = {};
@@ -120,60 +173,60 @@ export default function UniversitiesGallery({ _res }) {
   }
 
   // needs to use the "function" keyword to allow hoisting
-  function filterUni(unis, search) {
-    let filteredUnis = unis;
-    if (selectedCategory.value !== 'all') {
-      filteredUnis = filteredUnis.filter(
-        (uni) => uni.category.toLowerCase() === selectedCategory.value
-      );
-    }
-    if (selectedConference.value !== 'all') {
-      filteredUnis = filteredUnis.filter(
-        (uni) => uni.conference.toLowerCase() === selectedConference.value
-      );
-    }
-    if (selectedState.value !== 'all') {
-      filteredUnis = filteredUnis.filter(
-        (uni) => uni.state.toLowerCase() === selectedState.value
-      );
-    }
-    if (selectedRegion.value !== 'all') {
-      filteredUnis = filteredUnis.filter(
-        (uni) => uni.region.toLowerCase() === selectedRegion.value
-      );
-    }
-    if (selectedDivision.value !== 'all') {
-      filteredUnis = filteredUnis.filter(
-        (uni) => uni.division.toLowerCase() === selectedDivision.value
-      );
-    }
-    search = search.toLowerCase();
-    if (search !== '') {
-      filteredUnis = filteredUnis.filter(
-        (uni) =>
-          uni.name.toLowerCase().includes(search) ||
-          uni.city.toLowerCase().includes(search)
-      );
-    }
-    // below code is used to optimistically remove unis from /myuniversities
-    if (mine) {
-      let i = 0;
-      while (i < filteredUnis.length) {
-        if (
-          (!filteredUnis[i].interested && !filteredUnis[i].prev) ||
-          (!filteredUnis[i].interested &&
-            filteredUnis[i].prev &&
-            !filteredUnis[i].prev.interested)
-        ) {
-          filteredUnis.splice(i, 1);
-        } else {
-          i++;
-        }
-      }
-      if (filteredUnis.length === 0) document.body.style.overflow = 'unset';
-    }
-    return filteredUnis;
-  }
+  // function filterUni(unis, search) {
+  //   let filteredUnis = unis;
+  //   if (selectedCategory.value !== 'all') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) => uni.category.toLowerCase() === selectedCategory.value
+  //     );
+  //   }
+  //   if (selectedConference.value !== 'all') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) => uni.conference.toLowerCase() === selectedConference.value
+  //     );
+  //   }
+  //   if (selectedState.value !== 'all') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) => uni.state.toLowerCase() === selectedState.value
+  //     );
+  //   }
+  //   if (selectedRegion.value !== 'all') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) => uni.region.toLowerCase() === selectedRegion.value
+  //     );
+  //   }
+  //   if (selectedDivision.value !== 'all') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) => uni.division.toLowerCase() === selectedDivision.value
+  //     );
+  //   }
+  //   search = search.toLowerCase();
+  //   if (search !== '') {
+  //     filteredUnis = filteredUnis.filter(
+  //       (uni) =>
+  //         uni.name.toLowerCase().includes(search) ||
+  //         uni.city.toLowerCase().includes(search)
+  //     );
+  //   }
+  //   // below code is used to optimistically remove unis from /myuniversities
+  //   if (mine) {
+  //     let i = 0;
+  //     while (i < filteredUnis.length) {
+  //       if (
+  //         (!filteredUnis[i].interested && !filteredUnis[i].prev) ||
+  //         (!filteredUnis[i].interested &&
+  //           filteredUnis[i].prev &&
+  //           !filteredUnis[i].prev.interested)
+  //       ) {
+  //         filteredUnis.splice(i, 1);
+  //       } else {
+  //         i++;
+  //       }
+  //     }
+  //     if (filteredUnis.length === 0) document.body.style.overflow = 'unset';
+  //   }
+  //   return filteredUnis;
+  // }
 
   if (loading) {
     return (
@@ -280,10 +333,11 @@ export default function UniversitiesGallery({ _res }) {
         <Spinner />
       ) : (
         <InfiniteScroll
-          dataLength={searchIndex}
-          next={() => {
-            setSearchIndex((prev) => prev + 9);
-          }}
+          dataLength={count}
+          // next={() => {
+          //   setSearchIndex((prev) => prev + 9);
+          // }}
+          next={fetchMoreData}
           hasMore={hasMore}
           endMessage={
             <span className="flex justify-center">
@@ -294,16 +348,15 @@ export default function UniversitiesGallery({ _res }) {
           }
           loader={<Spinner />}
         >
-          {chunk(searchedUnis.slice(0, searchIndex), 3).map(
-            (uniChunk, index) => (
-              <GalleryRow
-                key={uniChunk[0].id}
-                dataChunk={uniChunk}
-                setAllUnis={setAllUnis}
-                mine={mine}
-              />
-            )
-          )}
+          {chunk(searchedUnis.slice(0, count), 3).map((uniChunk) => (
+            <GalleryRow
+              key={uniChunk[0].id}
+              dataChunk={uniChunk}
+              setAllUnis={setAllUnis}
+              mine={mine}
+              searchTerm={searchTerm}
+            />
+          ))}
         </InfiniteScroll>
       )}
     </div>

@@ -1,6 +1,5 @@
 export const cateGoryOptions = [
   { value: 'all', label: 'All' },
-  { value: 'men, women', label: 'Both' },
   { value: 'men', label: 'Men' },
   { value: 'women', label: 'Women' },
 ];

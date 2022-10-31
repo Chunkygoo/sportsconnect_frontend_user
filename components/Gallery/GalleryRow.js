@@ -1,7 +1,12 @@
 import React from 'react';
 import GalleryItem from './GalleryItem';
 
-export default function GalleryRow({ dataChunk, setAllUnis, mine }) {
+export default function GalleryRow({
+  dataChunk,
+  setAllUnis,
+  mine,
+  searchTerm,
+}) {
   return (
     <>
       <section className="overflow-hidden text-gray-700 ">
@@ -15,6 +20,7 @@ export default function GalleryRow({ dataChunk, setAllUnis, mine }) {
                   datum={dataChunk[0]}
                   setAllUnis={setAllUnis}
                   mine={mine}
+                  searchTerm={searchTerm}
                 />
               )
             }
@@ -26,6 +32,7 @@ export default function GalleryRow({ dataChunk, setAllUnis, mine }) {
                   datum={dataChunk[1]}
                   setAllUnis={setAllUnis}
                   mine={mine}
+                  searchTerm={searchTerm}
                 />
               )
             }
@@ -37,6 +44,7 @@ export default function GalleryRow({ dataChunk, setAllUnis, mine }) {
                   datum={dataChunk[2]}
                   setAllUnis={setAllUnis}
                   mine={mine}
+                  searchTerm={searchTerm}
                 />
               )
             }

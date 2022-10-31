@@ -4,7 +4,7 @@ import React from 'react';
 import CheckBox from '../Universities/CheckBox';
 import IconCross from './../Icons/IconCross';
 
-const Content = ({ uni, onClose, setAllUnis, mine }) => {
+const Content = ({ uni, onClose, setAllUnis, mine, searchTerm }) => {
   const { t } = useTranslation();
   const checkBox = (
     <CheckBox
@@ -16,6 +16,7 @@ const Content = ({ uni, onClose, setAllUnis, mine }) => {
       category={uni.category}
       prev={uni.prev}
       isPrev={false}
+      searchTerm={searchTerm}
     />
   );
   if (uni.prev) {
@@ -29,6 +30,7 @@ const Content = ({ uni, onClose, setAllUnis, mine }) => {
         mine={mine}
         category={uni.prev.category}
         isPrev={true}
+        searchTerm={searchTerm}
       />
     );
   }
