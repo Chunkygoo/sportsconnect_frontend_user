@@ -17,6 +17,7 @@ const Content = ({ uni, onClose, setAllUnis, mine, searchTerm }) => {
       prev={uni.prev}
       isPrev={false}
       searchTerm={searchTerm}
+      onClose={onClose}
     />
   );
   if (uni.prev) {
@@ -31,6 +32,7 @@ const Content = ({ uni, onClose, setAllUnis, mine, searchTerm }) => {
         category={uni.prev.category}
         isPrev={true}
         searchTerm={searchTerm}
+        onClose={onClose}
       />
     );
   }

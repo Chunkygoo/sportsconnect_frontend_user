@@ -68,6 +68,7 @@ function MyApp({ Component, pageProps, ...appProps }) {
   // End workaround for Google login issues
 
   const logOutHelper = useCallback(async () => {
+    queryClient.clear();
     await signOut();
     toast.success(t('header:logged_out'), {
       position: toast.POSITION.BOTTOM_RIGHT,

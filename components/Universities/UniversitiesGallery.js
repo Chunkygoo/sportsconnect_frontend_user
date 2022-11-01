@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useTranslation from 'next-translate/useTranslation';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import Spinner from '../Spinner';
@@ -34,54 +34,70 @@ export default function UniversitiesGallery({ _res }) {
   const [selectedState, setSelectedState] = useState(stateOptions[0]);
   const [selectedRegion, setSelectedRegion] = useState(regionOptions[0]);
   const [selectedDivision, setSelectedDivision] = useState(divisionOptions[0]);
-  const [search, setSearch] = useState('');
+  const [searchNameOrCity, setSearchNameOrCity] = useState('');
 
   const abortControllerRef = useRef(new AbortController());
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [count, setCount] = useState(24);
 
   var mine = !_res; // needs to be var to avoid scope errors
 
-  const searchTerm = [
-    search,
-    selectedState.value,
-    selectedConference.value,
-    selectedDivision.value,
-    selectedRegion.value,
-    selectedCategory.value,
-  ].join('***'); // just pick a unique value to join that matches the backend (didn't use coma since the values may contain comas). Any key is fine as long as the frontend values don't contain them
+  const searchTerm = JSON.stringify({
+    searchNameOrCity: searchNameOrCity,
+    selectedState: selectedState.value,
+    selectedConference: selectedConference.value,
+    selectedDivision: selectedDivision.value,
+    selectedRegion: selectedRegion.value,
+    selectedCategory: selectedCategory.value,
+  });
 
-  const resetLength =
-    queryClient.getQueryData([reactQueryKeys.universities, mine, searchTerm])
-      ?.data.length || 24;
-  const getUnis = mine ? getInterestedUniversities : getUniversities;
-  const getUnisFunction = useCallback(
-    async (limit, skip, search = '') => {
-      const abortControllerRefCurrent = abortControllerRef.current;
-      if (!(await Session.doesSessionExist())) {
-        return await getPublicUniversities(
-          limit,
-          abortControllerRefCurrent,
-          skip,
-          search
-        );
-      }
-      return await getUnis(limit, abortControllerRefCurrent, skip, search);
-    },
-    [getUnis]
-  );
+  // const resetLength =
+  //   queryClient.getQueryData([reactQueryKeys.universities, mine, searchTerm])
+  //     ?.data.length || 9;
+  const getUnisFunction = async (limit, skip, search = '') => {
+    const abortControllerRefCurrent = abortControllerRef.current;
+    if (!(await Session.doesSessionExist())) {
+      return await getPublicUniversities(
+        limit,
+        abortControllerRefCurrent,
+        skip,
+        search
+      );
+    }
+    const getUnis = mine ? getInterestedUniversities : getUniversities;
+    return await getUnis(limit, abortControllerRefCurrent, skip, search);
+  };
+
+  const getRequestLength = () => {
+    const currentCacheLength = queryClient.getQueryData([
+      reactQueryKeys.universities,
+      mine,
+      searchTerm,
+    ])?.data.length;
+    if (currentCacheLength && currentCacheLength >= 9) {
+      return currentCacheLength;
+    }
+    return 9;
+  };
 
   const { data: uniData, isLoading: loading } = useQuery(
     [reactQueryKeys.universities, mine, searchTerm],
-    () => getUnisFunction(resetLength, 0, searchTerm),
+    () => {
+      // we cannot use resetLength here because it captures the length at render, not in real/current time
+      // whereas how we do it below, we compute the values when the function "getRequestLength" is invoked, so we get the most
+      // up to date values.
+      return getUnisFunction(getRequestLength(), 0, searchTerm);
+    },
     {
-      onSuccess: ({ data, status }) => {
+      onSuccess: async ({ data, status }) => {
         if (status === 200) {
           setAllUnis(data);
-          setCount(resetLength);
-          setHasMore(true);
-        } else if (status == 404 || status == 422) {
+          if (data.length === 0) {
+            setHasMore(false);
+          } else {
+            await fetchMoreData();
+          }
+        } else {
           router.push('/error');
         }
       },
@@ -105,21 +121,26 @@ export default function UniversitiesGallery({ _res }) {
     ])?.data;
     if (cachedData) {
       setAllUnis(cachedData);
-      setCount(resetLength);
       setHasMore(true);
     }
-  }, [mine, queryClient, resetLength, searchTerm]);
-
-  useEffect(() => {
-    if (count > allUnis.length) {
-      setHasMore(false);
-    }
-  }, [count, allUnis.length]);
+  }, [mine, queryClient, searchTerm]);
+  // end optimistic retrieve
 
   const fetchMoreData = async () => {
     try {
-      let res = await getUnisFunction(9, count, searchTerm);
-      setCount((prevCount) => prevCount + 9);
+      let res = await getUnisFunction(
+        9,
+        queryClient.getQueryData([
+          reactQueryKeys.universities,
+          mine,
+          searchTerm,
+        ])?.data.length || 9,
+        searchTerm
+      );
+      // unlike the intial fetch, we want to check if there is more data to be fetched. So check < 9, not === 0
+      if (res?.data.length < 9) {
+        setHasMore(false);
+      }
       setAllUnis((prevUnis) => {
         const newAllUnis = [].concat(prevUnis, res.data);
         queryClient.setQueryData(
@@ -140,8 +161,7 @@ export default function UniversitiesGallery({ _res }) {
   };
 
   function transformUnis(unis) {
-    let transformedUnis = {};
-    unis.map((uni, index) => {
+    return unis.map((uni, index) => {
       let uniObj = {
         ...uni,
         index: index,
@@ -150,83 +170,16 @@ export default function UniversitiesGallery({ _res }) {
         logo: `/logos/${uni.name}.png`,
         blurredLogo: `/blurredLogos/${uni.name}.png`,
       };
-      if (uni.name in transformedUnis) {
-        uniObj.name =
-          `(${t('universities:men')}, ${t('universities:women')}) ` + uni.name;
-        uniObj.category = 'Men, Women';
-        uniObj.prev = transformedUnis[uni.name];
+      let uniCategory = '';
+      if (uni.category === 'Men') {
+        uniCategory = t('universities:men');
       } else {
-        let uniCategory = '';
-        if (uni.category === 'Men') {
-          uniCategory = t('universities:men');
-        } else {
-          uniCategory = t('universities:women');
-        }
-        uniObj.name = '(' + uniCategory + ') ' + uni.name;
+        uniCategory = t('universities:women');
       }
-      transformedUnis[uni.name] = uniObj;
-    });
-
-    return Object.keys(transformedUnis).map((k) => {
-      return transformedUnis[k];
+      uniObj.name = '(' + uniCategory + ') ' + uni.name;
+      return uniObj;
     });
   }
-
-  // needs to use the "function" keyword to allow hoisting
-  // function filterUni(unis, search) {
-  //   let filteredUnis = unis;
-  //   if (selectedCategory.value !== 'all') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) => uni.category.toLowerCase() === selectedCategory.value
-  //     );
-  //   }
-  //   if (selectedConference.value !== 'all') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) => uni.conference.toLowerCase() === selectedConference.value
-  //     );
-  //   }
-  //   if (selectedState.value !== 'all') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) => uni.state.toLowerCase() === selectedState.value
-  //     );
-  //   }
-  //   if (selectedRegion.value !== 'all') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) => uni.region.toLowerCase() === selectedRegion.value
-  //     );
-  //   }
-  //   if (selectedDivision.value !== 'all') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) => uni.division.toLowerCase() === selectedDivision.value
-  //     );
-  //   }
-  //   search = search.toLowerCase();
-  //   if (search !== '') {
-  //     filteredUnis = filteredUnis.filter(
-  //       (uni) =>
-  //         uni.name.toLowerCase().includes(search) ||
-  //         uni.city.toLowerCase().includes(search)
-  //     );
-  //   }
-  //   // below code is used to optimistically remove unis from /myuniversities
-  //   if (mine) {
-  //     let i = 0;
-  //     while (i < filteredUnis.length) {
-  //       if (
-  //         (!filteredUnis[i].interested && !filteredUnis[i].prev) ||
-  //         (!filteredUnis[i].interested &&
-  //           filteredUnis[i].prev &&
-  //           !filteredUnis[i].prev.interested)
-  //       ) {
-  //         filteredUnis.splice(i, 1);
-  //       } else {
-  //         i++;
-  //       }
-  //     }
-  //     if (filteredUnis.length === 0) document.body.style.overflow = 'unset';
-  //   }
-  //   return filteredUnis;
-  // }
 
   if (loading) {
     return (
@@ -252,9 +205,9 @@ export default function UniversitiesGallery({ _res }) {
               t('universities:uni_or_city_name') +
               ' ...'
             }
-            value={search || ''}
+            value={searchNameOrCity || ''}
             className="xl:ml-0 max-w-xl text-sm md:text-base rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearchNameOrCity(e.target.value)}
           />
         </span>
         <span className="w-full md:w-1/3 my-auto">
@@ -333,10 +286,8 @@ export default function UniversitiesGallery({ _res }) {
         <Spinner />
       ) : (
         <InfiniteScroll
-          dataLength={count}
-          // next={() => {
-          //   setSearchIndex((prev) => prev + 9);
-          // }}
+          className="infinite-scroll-hide"
+          dataLength={allUnis.length}
           next={fetchMoreData}
           hasMore={hasMore}
           endMessage={
@@ -348,7 +299,7 @@ export default function UniversitiesGallery({ _res }) {
           }
           loader={<Spinner />}
         >
-          {chunk(searchedUnis.slice(0, count), 3).map((uniChunk) => (
+          {chunk(searchedUnis, 3).map((uniChunk) => (
             <GalleryRow
               key={uniChunk[0].id}
               dataChunk={uniChunk}

@@ -20,6 +20,7 @@ export default memo(function CheckBox({
   isPrev,
   mine,
   searchTerm,
+  onClose,
 }) {
   let session = useSessionContext();
   let { doesSessionExist } = session;
@@ -51,10 +52,16 @@ export default memo(function CheckBox({
         // Optimistic update
         setAllUnis((prevAllUnis) => {
           let newAllUnis = [...prevAllUnis];
-          newAllUnis[index] = {
-            ...prevAllUnis[index],
+          const modifiedUniIndex = prevAllUnis.findIndex(
+            (uni) => uni.id === _uniId
+          );
+          newAllUnis[modifiedUniIndex] = {
+            ...newAllUnis[modifiedUniIndex],
             interested: !interested,
           };
+          if (mine && interested) {
+            newAllUnis.splice(modifiedUniIndex, 1); // remove from myuniversities
+          }
           return newAllUnis;
         });
         return { previousUniData };
@@ -68,7 +75,6 @@ export default memo(function CheckBox({
           position: toast.POSITION.BOTTOM_RIGHT,
         });
       },
-      // Always refetch after error or success - sync the cache no matter what
       onSettled: () => {
         queryClient.invalidateQueries([
           reactQueryKeys.universities,
@@ -105,6 +111,7 @@ export default memo(function CheckBox({
       className={'p-1 rounded ' + bodyClassNames}
       onClick={() => {
         if (doesSessionExist) {
+          onClose();
           updateInterestInUni(uniId);
         } else {
           router.push('/auth/loginsignup');

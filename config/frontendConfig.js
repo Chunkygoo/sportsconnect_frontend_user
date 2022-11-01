@@ -6,41 +6,8 @@ import ThirdPartyEmailPassword, {
 import { appInfo } from './appInfo';
 import Router from 'next/router';
 import { toast } from 'react-toastify';
-import { reactQueryKeys } from './reactQueryKeys';
-import { getCurrentUser } from '../network/lib/users';
-import { queryClient } from '../pages/_app';
-import { getEducations } from '../network/lib/education';
-import { getExperiences } from '../network/lib/experience';
-import {
-  getInterestedUniversities,
-  getUniversities,
-} from '../network/lib/universities';
 
 export const frontendConfig = () => {
-  const prefetchQueries = async () => {
-    try {
-      // execute in parallel
-      await Promise.all([
-        queryClient.prefetchQuery([reactQueryKeys.currentUser], () =>
-          getCurrentUser(new AbortController())
-        ),
-        queryClient.prefetchQuery([reactQueryKeys.educations], () =>
-          getEducations(new AbortController())
-        ),
-        queryClient.prefetchQuery([reactQueryKeys.experiences], () =>
-          getExperiences(new AbortController())
-        ),
-        queryClient.prefetchQuery([reactQueryKeys.universities, true], () =>
-          getUniversities(-1, new AbortController())
-        ),
-        queryClient.prefetchQuery([reactQueryKeys.universities, false], () =>
-          getInterestedUniversities(-1, new AbortController())
-        ),
-      ]);
-    } catch (error) {
-      console.log(error); // we admit that there is an error but it's ok
-    }
-  };
   return {
     appInfo,
     recipeList: [
@@ -98,10 +65,6 @@ export const frontendConfig = () => {
               // we are navigating back to where the user was before they authenticated
               return context.redirectToPath;
             }
-
-            // prefetch data for the current users
-            await prefetchQueries();
-
             // For Google login, we need a workaround because Router.locale will always be the default upon successful login.
             // Hence, we use localStorage in _app.js, LanguageDropdown.js, frontendConfig.js and home.js to redirect and set
             // the right locale

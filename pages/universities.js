@@ -12,7 +12,7 @@ export default function universities({ _res }) {
 
 export async function getStaticProps() {
   try {
-    let res = await getPublicUniversities(24);
+    let res = await getPublicUniversities(9);
     return {
       props: {
         _res: { data: res.data, status: res.status },
@@ -21,7 +21,7 @@ export async function getStaticProps() {
   } catch (error) {
     return {
       props: {
-        _res: { data: [], status: res.status },
+        _res: { data: [], status: 200 },
       },
     };
   }
